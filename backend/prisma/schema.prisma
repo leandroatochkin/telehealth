@@ -1,0 +1,93 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+  engineType    = "binary"
+}
+
+model User {
+  id                       String   @id @default(uuid())
+  username                 String   @unique @db.VarChar(30)
+  email                    String   @unique
+  password                 String
+
+  isVerified               Boolean  @default(false)
+  role                     Role     @default(PATIENT)
+
+  otp                      String?
+  otpExpires               DateTime?
+
+  resetPasswordOTP         String?
+  resetPasswordOTPExpires  DateTime?
+
+  createdAt                DateTime @default(now())
+  updatedAt                DateTime @updatedAt
+
+  availabilities   Availability[]
+
+  professionalAppointments  Appointment[] @relation("ProfessionalAppointments")
+  patientAppointments Appointment[] @relation("PatientAppointments")
+}
+
+enum Role {
+  PATIENT
+  ADMIN
+  PROFESSIONAL
+}
+
+enum AppointmentStatus {
+  scheduled
+  active
+  completed
+  cancelled
+  no_show
+}
+
+model Appointment {
+  id        String   @id @default(uuid())
+
+  professionalId  String
+  patientId String
+
+  professional    User @relation("ProfessionalAppointments", fields: [professionalId], references: [id])
+  patient   User @relation("PatientAppointments", fields: [patientId], references: [id])
+
+  startTime DateTime
+  endTime   DateTime
+
+  status AppointmentStatus @default(scheduled)
+
+  professionalJoinedAt  DateTime?
+  patientJoinedAt DateTime?
+  endedAt         DateTime?
+
+  createdAt DateTime @default(now())
+
+  @@index([professionalId, startTime])
+  @@index([patientId, startTime])
+}
+
+model Availability {
+  id        String   @id @default(uuid())
+  professionalId  String
+
+  professional    User     @relation(fields: [professionalId], references: [id])
+
+  dayOfWeek Int      // 0 (Sunday) - 6 (Saturday)
+
+  startTime String   // "09:00"
+  endTime   String   // "17:00"
+
+  createdAt DateTime @default(now())
+
+  @@index([professionalId, dayOfWeek])
+}
