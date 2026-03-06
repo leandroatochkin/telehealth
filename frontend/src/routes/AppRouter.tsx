@@ -1,12 +1,10 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 import LoginPage from "../views/Login";
 import SignupPage from "../views/SignUp";
 import VerifyPage from "../views/Verify";
-import DashboardPage from "../views/Dashboard";
 import VideoStream from "../views/Video";
 import ProtectedRoute from "./ProtectedRoute";
-import PublicRoute from "./PublicRoute";
 import PatientRoute from "./PatientRoutes";
 import ProfessionalRoute from "./ProfessionalRoutes";
 import BookingPage from "../views/Booking";
@@ -19,15 +17,15 @@ export default function AppRouter() {
       <Routes>
 
         {/* PUBLIC ROUTES */}
-        <Route element={<PublicRoute />}>
+      
           <Route path="/auth/login" element={<LoginPage />} />
           <Route path="/auth/signup" element={<SignupPage />} />
           <Route path="/auth/verify" element={<VerifyPage />} />
-        </Route>
+        
 
         {/* PROTECTED ROUTES */}
         <Route element={<ProtectedRoute />}>
-          <Route path="/dashboard" element={<DashboardPage />} />
+          {/* <Route path="/dashboard" element={<DashboardPage />} /> */}
           <Route path="/video" element={<VideoStream />} />
         </Route>
 
@@ -41,7 +39,7 @@ export default function AppRouter() {
         </Route>
 
         {/* DEFAULT ROUTE */}
-        <Route path="/" element={<Navigate to="/dashboard" />} />
+        {/* <Route path="/" element={<Navigate to="/dashboard" />} /> */}
 
         {/* 404 */}
         <Route path="*" element={<h1>404 Not Found</h1>} />

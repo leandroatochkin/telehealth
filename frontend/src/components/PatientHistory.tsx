@@ -16,7 +16,7 @@ export default function PatientHistory() {
     <Box>
 
       <Typography variant="h5" sx={{ mb: 3 }}>
-        Patient History
+        Historia Clínica por Paciente
       </Typography>
 
       <TextField
@@ -41,7 +41,7 @@ export default function PatientHistory() {
         variant="contained"
         onClick={handleSave}
       >
-        Update History
+        Actualizar Historia
       </Button>
 
     </Box>

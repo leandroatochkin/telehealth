@@ -2,18 +2,17 @@ import { Box, Button, Typography } from "@mui/material";
 import { useAppSelector, useAppDispatch } from "../lib/hooks";
 import { notify } from "../lib/notifications";
 import { useEffect } from "react";
-import { fetchPatientAppointments } from "../api/appointments/appointments.api";
+import { fetchPatientAppointments } from "../api/appointments.api";
 
 export default function TodayAppointments() {
     const dispatch = useAppDispatch();
   
-  const { appointments, loading } = useAppSelector(
+  const { appointments } = useAppSelector(
     (state) => state.appointments
   );
-  const user = useAppSelector((state) => state.auth.user);
-  const streamToken = useAppSelector((state) => state.auth.streamToken);
+
   const { token } = useAppSelector((state) => state.auth);
-  const { colors, shadows, fontWeights } =
+  const { colors } =
     useAppSelector((state) => state.theme);
 
    useEffect(() => {
@@ -83,7 +82,7 @@ export default function TodayAppointments() {
             variant="contained"
             onClick={() => handleJoin(appt.callId)}
           >
-            Join Call
+            Unirse a la Videollamada
           </Button>
 
         </Box>

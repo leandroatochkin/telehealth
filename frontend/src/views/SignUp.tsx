@@ -9,7 +9,7 @@ import {
 } from "@mui/material";
 import { useForm } from "react-hook-form";
 import { useAppDispatch, useAppSelector } from "../lib/hooks";
-import { signupUser, type SignupInput } from "../api/auth/auth.api";
+import { signupUser, type SignupInput } from "../api/auth.api";
 import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 
@@ -70,7 +70,7 @@ export default function SignupPage() {
               mb: 2,
             }}
           >
-            Create Account
+            Crear Cuenta
           </Typography>
 
           {error && (

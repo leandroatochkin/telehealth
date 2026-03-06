@@ -9,6 +9,8 @@ import { loginController } from "./controllers/login.controller.js";
 import { streamController } from "./controllers/stream.controller.js";
 import { appointmentController } from "./controllers/appointment.controller.js";
 import { availabilityController } from "./controllers/availabitity.controller.js";
+import { prescriptionController } from "./controllers/prescription.controller.js";
+import { prescriptionPdfController } from "./controllers/prescriptionPdf.controller.js";
 
 export const app = Fastify({
   logger: {
@@ -45,8 +47,11 @@ const urlPrefix = "/api/v1"
 const start = async () => {
   
   await app.register(cors, {
-      origin: process.env.CORS_ORIGIN || "*", 
-    });
+  origin: "http://localhost:5173",
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+  exposedHeaders: ["Content-Disposition"],
+});
 
   await app.register(cookie, {
       secret: process.env.COOKIE_SECRET || '', // optional (for signed cookies)
@@ -58,44 +63,9 @@ const start = async () => {
   await app.register(streamController, { prefix: urlPrefix });
   await app.register(appointmentController, { prefix: urlPrefix });
   await app.register(availabilityController, { prefix: urlPrefix });
+  await app.register(prescriptionController, { prefix: urlPrefix });
+  await app.register(prescriptionPdfController, { prefix: urlPrefix });
   
-  app.setErrorHandler((error: any, request, reply) => {
-  if (error.code === "FST_ERR_RATE_LIMIT") {
-    request.log.warn(
-      { ip: request.ip, url: request.url },
-      "Rate limit exceeded"
-    );
-
-    return reply.status(429).send({
-      error: "Too many requests",
-    });
-  }
-
-  request.log.error(error);
-  reply.status(500).send({ error: "Internal Server Error" });
-  });
-
-  app.setErrorHandler((error: any, request, reply) => {
-    request.log.error(
-      {
-        err: error,
-        url: request.url,
-        method: request.method,
-      },
-      "Unhandled error"
-    );
-
-    if (error?.code === "P2022") {
-      return reply.status(500).send({
-        error: "Database schema mismatch",
-      });
-    }
-
-    reply.status(500).send({
-      error: "Internal Server Error",
-    });
-  });
-
   app.setErrorHandler((error: any, request, reply) => {
   // Log the error details with Pino
     request.log.error({

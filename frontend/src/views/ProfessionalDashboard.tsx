@@ -1,14 +1,16 @@
 import { Box, Button, Typography } from "@mui/material";
 import { useState } from "react";
-import { useAppSelector } from "../lib/hooks";
-
+import { useAppSelector, useAppDispatch } from "../lib/hooks";
+import { useNavigate } from "react-router-dom";
 import TodayAppointments from "../components/TodayAppointments";
 import ProfessionalAvailabilityPage from "./ProfessionalAvailability";
-import PrescriptionModal from "../components/PrescriprionModal";
+import PrescriptionModal from "../components/PrescriptionModal";
 import PatientHistory from "../components/PatientHistory";
+import { logout } from "../store/slices/auth.slice";
 
 export default function ProfessionalDashboard() {
-
+  const dispatch = useAppDispatch();
+  const navigate = useNavigate();
   const { colors, shadows } = useAppSelector(state => state.theme);
 
   const [view, setView] = useState<
@@ -16,6 +18,12 @@ export default function ProfessionalDashboard() {
   >("appointments");
 
   const [prescriptionOpen, setPrescriptionOpen] = useState(false);
+
+  const handleLogout = () => {
+      dispatch(logout());
+      navigate("/auth/login");
+    };
+  
 
   return (
 
@@ -43,23 +51,35 @@ export default function ProfessionalDashboard() {
       >
 
         <Typography variant="h6">
-          Professional Panel
+          Panel del Profesional
         </Typography>
 
         <Button onClick={() => setView("appointments")}>
-          Today Appointments
+          Turnos de Hoy
         </Button>
 
         <Button onClick={() => setView("availability")}>
-          Set Availability
+          Establecer Disponibilidad
         </Button>
 
         <Button onClick={() => setPrescriptionOpen(true)}>
-          Digital Prescription
+          Receta Digital
         </Button>
 
         <Button onClick={() => setView("history")}>
-          Patient History
+          Historial de Pacientes
+        </Button>
+
+        <Button
+          fullWidth
+          variant="outlined"
+          onClick={handleLogout}
+          sx={{
+            borderColor: colors.danger,
+            color: colors.danger,
+          }}
+        >
+          Salir
         </Button>
 
       </Box>

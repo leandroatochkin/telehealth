@@ -15,27 +15,36 @@ generator client {
 }
 
 model User {
-  id                       String   @id @default(uuid())
-  username                 String   @unique @db.VarChar(30)
-  email                    String   @unique
-  password                 String
+  id        String   @id @default(uuid())
+  username  String   @unique @db.VarChar(30)
+  email     String   @unique
+  password  String
 
-  isVerified               Boolean  @default(false)
-  role                     Role     @default(PATIENT)
+  dni       String?  @unique
+  name      String?
+  surname   String?
 
-  otp                      String?
-  otpExpires               DateTime?
+  medicalLicense String? 
 
-  resetPasswordOTP         String?
-  resetPasswordOTPExpires  DateTime?
+  isVerified Boolean @default(false)
+  role       Role    @default(PATIENT)
 
-  createdAt                DateTime @default(now())
-  updatedAt                DateTime @updatedAt
+  otp        String?
+  otpExpires DateTime?
 
-  availabilities   Availability[]
+  resetPasswordOTP        String?
+  resetPasswordOTPExpires DateTime?
 
-  professionalAppointments  Appointment[] @relation("ProfessionalAppointments")
-  patientAppointments Appointment[] @relation("PatientAppointments")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  availabilities Availability[]
+
+  professionalAppointments Appointment[] @relation("ProfessionalAppointments")
+  patientAppointments      Appointment[] @relation("PatientAppointments")
+
+  prescriptionsWritten  Prescription[] @relation("DoctorPrescriptions")
+  prescriptionsReceived Prescription[] @relation("PatientPrescriptions")
 }
 
 enum Role {
@@ -90,4 +99,43 @@ model Availability {
   createdAt DateTime @default(now())
 
   @@index([professionalId, dayOfWeek])
+}
+
+model Prescription {
+  id String @id @default(uuid())
+
+  doctorId  String
+  patientId String
+
+  doctorNameSnapshot String
+  patientNameSnapshot String
+
+  doctor  User @relation("DoctorPrescriptions", fields: [doctorId], references: [id])
+  patient User @relation("PatientPrescriptions", fields: [patientId], references: [id])
+
+  items PrescriptionItem[]
+
+  createdAt DateTime @default(now())
+
+  @@index([doctorId])
+  @@index([patientId])
+}
+
+model PrescriptionItem {
+  id String @id @default(uuid())
+
+  prescriptionId String
+  prescription   Prescription @relation(fields: [prescriptionId], references: [id])
+
+  drugName        String
+  genericName     String?
+  concentration   String?
+  form            String?
+  presentation    String?
+
+  quantity Int
+
+  createdAt DateTime @default(now())
+
+  @@index([prescriptionId])
 }

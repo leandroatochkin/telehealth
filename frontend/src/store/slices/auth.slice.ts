@@ -1,5 +1,5 @@
 import { createSlice } from "@reduxjs/toolkit";
-import { signupUser, verifyAccount, resendOtp, loginUser, fetchStreamToken } from "../../api/auth/auth.api";
+import { signupUser, verifyAccount, resendOtp, loginUser, fetchStreamToken } from "../../api/auth.api";
 
 interface AuthState {
   loading: boolean;

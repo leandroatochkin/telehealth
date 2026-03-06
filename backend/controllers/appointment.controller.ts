@@ -111,4 +111,71 @@ export const appointmentController = async (
       });
     }
   });
+
+  app.get<{
+  Params: { professionalId: string };
+  Querystring: { date: string };
+}>("/appointments/professional/:professionalId", { preHandler: isAuthenticated }, async (request, reply) => {
+  try {
+    const { professionalId } = request.params;
+    const { date } = request.query;
+
+    // Optional: Security check to ensure the doctor is requesting their own data
+    if (request.user?.role === "PROFESSIONAL" && request.user.id !== professionalId) {
+      return reply.status(403).send({ status: "fail", message: "Forbidden" });
+    }
+
+    const appointments = await service.getByProfessionalAndDate(professionalId, date);
+
+    return reply.status(200).send({
+      status: "success",
+      data: appointments,
+    });
+  } catch (error: any) {
+    return reply.status(500).send({
+      status: "error",
+      message: error.message,
+    });
+  }
+});
+
+app.post<{
+  Body: {
+    professionalId: string;
+    startTime: string;
+    endTime: string;
+  };
+}>("/appointments/create", { preHandler: isAuthenticated }, async (request, reply) => {
+  try {
+    const { professionalId, startTime, endTime } = request.body;
+    
+    // Security: Get patientId from the verified token, not the body
+    const patientId = (request as any).user.id;
+    console.log("Data: ",professionalId, patientId, startTime, endTime);
+    if (!professionalId || !startTime || !endTime) {
+      return reply.status(400).send({
+        status: "fail",
+        message: "Missing required fields",
+      });
+    }
+
+    const appointment = await service.create({
+      professionalId,
+      patientId,
+      startTime: new Date(startTime),
+      endTime: new Date(endTime),
+    });
+
+    return reply.status(201).send({
+      status: "success",
+      data: appointment,
+    });
+  } catch (error: any) {
+    return reply.status(400).send({
+      status: "fail",
+      message: error.message,
+    });
+  }
+});
 };
+

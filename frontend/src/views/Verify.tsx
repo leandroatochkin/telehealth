@@ -9,7 +9,7 @@ import {
 } from "@mui/material";
 import { useEffect, useRef, useState } from "react";
 import { useAppDispatch, useAppSelector } from "../lib/hooks";
-import { verifyAccount, resendOtp } from "../api/auth/auth.api";
+import { verifyAccount, resendOtp } from "../api/auth.api";
 import { useNavigate } from "react-router-dom";
 
 export default function VerifyPage() {
@@ -59,7 +59,7 @@ export default function VerifyPage() {
         }}
       >
         <Typography>
-          No email found. Please sign up again.
+            No se ha encontrado ningún proceso de verificación. Por favor, regresa a la página de inicio de sesión.
         </Typography>
       </Box>
     );
@@ -129,7 +129,7 @@ export default function VerifyPage() {
               color: colors.textPrimary,
             }}
           >
-            Verify Your Email
+            Verificar Cuenta
           </Typography>
 
           <Typography
@@ -140,7 +140,7 @@ export default function VerifyPage() {
               fontWeight: fontWeights.regular,
             }}
           >
-            Enter the 6-digit code sent to{" "}
+            Ingrese el código de 6 dígitos enviado a{" "}
             <strong>{pendingEmail}</strong>
           </Typography>
 
@@ -230,7 +230,7 @@ export default function VerifyPage() {
                 variant="body2"
                 sx={{ color: colors.textSecondary }}
               >
-                Resend code in {timer}s
+                Reenviar código en {timer}s
               </Typography>
             ) : (
               <Button

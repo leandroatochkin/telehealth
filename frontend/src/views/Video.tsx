@@ -109,7 +109,7 @@ export default function VideoStream() {
           backgroundColor: "#f5f5f5",
         }}
       >
-        Connecting to video call...
+        Uniendose a la videollamada...
       </div>
     );
   }
@@ -146,7 +146,7 @@ export default function VideoStream() {
           boxShadow: "0 2px 6px rgba(0,0,0,0.2)",
         }}
       >
-        Leave Call
+        Salir de la Llamada
       </button>
     </div>
   );

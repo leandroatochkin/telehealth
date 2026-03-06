@@ -5,13 +5,13 @@ export const generateOTP = () => {
 }
 
 export async function assertNoOverlap(
-  doctorId: string,
+  professionalId: string,
   startTime: Date,
   endTime: Date
 ) {
   const overlapping = await prisma.appointment.findFirst({
     where: {
-      doctorId,
+      professionalId,
       status: {
         in: ["scheduled", "active"],
       },

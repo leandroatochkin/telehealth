@@ -93,3 +93,43 @@ export const createAvailability = createAsyncThunk(
     return res.json();
   }
 );
+
+export const fetchProfessionalAppointmentsByDate = createAsyncThunk(
+  "appointments/fetchByDate",
+  async ({ professionalId, date, token }: any, { rejectWithValue }) => {
+    try {
+      const res = await fetch(
+        `${import.meta.env.VITE_API_URL}/appointments/professional/${professionalId}?date=${date}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      const data = await res.json();
+      return data.data; // Assuming your backend returns { data: [...] }
+    } catch (err: any) {
+      return rejectWithValue(err.message);
+    }
+  }
+);
+
+export const createAppointment = createAsyncThunk(
+  "appointments/create",
+  async ({ professionalId, startTime, endTime, token }: any, { rejectWithValue }) => {
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/appointments/create`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ professionalId, startTime, endTime }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) return rejectWithValue(data.message);
+      return data;
+    } catch (err: any) {
+      return rejectWithValue(err.message);
+    }
+  }
+);

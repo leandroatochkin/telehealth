@@ -12,12 +12,12 @@ export function MyUILayout() {
   const participantCount = useParticipantCount();
 
   if (callingState !== CallingState.JOINED) {
-    return <div>Joining call...</div>;
+    return <div>Uniendose a la Videollamada</div>;
   }
 
   return (
     <div style={{ padding: '1rem', fontSize: '1.2rem' }}>
-      ✅ Call "<strong>{call?.id}</strong>" has <strong>{participantCount}</strong> participants.
+      ✅ La llamada "<strong>{call?.id}</strong>" tiene <strong>{participantCount}</strong> participantes.
     </div>
   );
 }

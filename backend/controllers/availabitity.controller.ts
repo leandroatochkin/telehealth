@@ -20,6 +20,8 @@
         const { professionalId } = request.params;
         const { date } = request.query;
 
+        
+
         const slots = await availabilityService.getAvailableSlots(
             professionalId,
             date
@@ -40,7 +42,7 @@
 
     app.post<{
     Body: {
-        dayOfWeek: number;
+        date: string;
         startTime: string;
         endTime: string;
     };
@@ -55,7 +57,7 @@
 
         const role = request.user.role;
 
-        if (role !== "professional") {
+        if (role !== "PROFESSIONAL") {
         return reply.status(403).send({
             status: "fail",
             message: "Only professionals can set availability",
@@ -71,10 +73,16 @@
         });
         }
 
+        const dayOfWeek = new Date(request.body.date).getDay();
+
         const availability = await prisma.availability.create({
         data: {
-            professionalId: userId,
-            ...request.body,
+          professionalId: userId,
+          dayOfWeek, // Now this is included as an Integer
+          startTime: request.body.startTime,
+          endTime: request.body.endTime,
+          // If your schema also has a 'date' field, include it:
+          // date: new Date(date) 
         },
         });
 

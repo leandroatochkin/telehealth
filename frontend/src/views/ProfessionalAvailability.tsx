@@ -15,16 +15,21 @@ import SlotList from "../components/SlotList";
 import {
   createAvailability,
   fetchAvailableSlots,
-} from "../api/appointments/appointments.api";
+  fetchProfessionalAppointmentsByDate,
+} from "../api/appointments.api";
 
 export default function ProfessionalAvailabilityPage() {
   const dispatch = useAppDispatch();
 
   const { token } = useAppSelector((state) => state.auth);
 
-  const { slots, loading } = useAppSelector(
+  const user = useAppSelector((state) => state.auth.user);
+
+  const { slots, appointments, loading } = useAppSelector(
     (state) => state.appointments
   );
+
+  console.log("Slots in Availability Page:", slots); // Debug log to check slot data
 
   const { colors, shadows, fontWeights } =
     useAppSelector((state) => state.theme);
@@ -34,18 +39,17 @@ export default function ProfessionalAvailabilityPage() {
   const [endTime, setEndTime] = useState("13:00");
 
   const handleDateChange = (newDate: Date | null) => {
-    setDate(newDate);
+  setDate(newDate);
+  if (!newDate || !token) return;
 
-    if (!newDate || !token) return;
+  const dateIso = newDate.toISOString();
 
-    dispatch(
-      fetchAvailableSlots({
-        professionalId: "professional-id-placeholder",
-        date: newDate.toISOString(),
-        token,
-      })
-    );
-  };
+  // 1. Fetch the empty/available slots
+  dispatch(fetchAvailableSlots({ professionalId: user?.id ?? "", date: dateIso, token }));
+
+  // 2. Fetch the booked appointments
+  dispatch(fetchProfessionalAppointmentsByDate({ professionalId: user?.id ?? "", date: dateIso, token }));
+};
 
   const handleCreateSlots = () => {
     if (!date || !token) return;
@@ -85,7 +89,7 @@ export default function ProfessionalAvailabilityPage() {
             color: colors.textPrimary,
           }}
         >
-          Select Day
+          Seleccione el día
         </Typography>
 
         <DateSelector value={date} onChange={handleDateChange} />
@@ -110,7 +114,7 @@ export default function ProfessionalAvailabilityPage() {
             color: colors.textPrimary,
           }}
         >
-          Create Availability
+          Crear Rango de Turnos
         </Typography>
 
         <Box
@@ -122,7 +126,7 @@ export default function ProfessionalAvailabilityPage() {
         >
           <TextField
             type="time"
-            label="Start"
+            label="Comienza"
             value={startTime}
             onChange={(e) => setStartTime(e.target.value)}
             fullWidth
@@ -130,7 +134,7 @@ export default function ProfessionalAvailabilityPage() {
 
           <TextField
             type="time"
-            label="End"
+            label="Finaliza "
             value={endTime}
             onChange={(e) => setEndTime(e.target.value)}
             fullWidth
@@ -148,7 +152,7 @@ export default function ProfessionalAvailabilityPage() {
             mb: 4,
           }}
         >
-          Generate 30min Slots
+          Generar Turnos de 30min
         </Button>
 
         <Typography
@@ -158,7 +162,7 @@ export default function ProfessionalAvailabilityPage() {
             color: colors.textPrimary,
           }}
         >
-          Existing Slots
+          Turnos Disponibles  
         </Typography>
 
         <Box
@@ -172,6 +176,7 @@ export default function ProfessionalAvailabilityPage() {
           ) : (
             <SlotList
               slots={slots}
+              appointments={appointments}
               onSelect={(slot) => console.log("slot", slot)}
             />
           )}

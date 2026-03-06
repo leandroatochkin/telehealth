@@ -9,8 +9,8 @@ export default function ProfessionalRoute() {
     return <Navigate to="/auth/login" replace />;
   }
 
-  if (userRole !== "PATIENT") {
-    return <Navigate to="/dashboard" replace />;
+  if (userRole !== "PROFESSIONAL") {
+    return <Navigate to="/dashboard/patient" replace />;
   }
 
   return <Outlet />;

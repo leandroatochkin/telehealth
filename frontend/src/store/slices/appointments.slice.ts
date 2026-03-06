@@ -2,13 +2,11 @@ import { createSlice } from "@reduxjs/toolkit";
 import {
   fetchAvailableSlots,
   fetchPatientAppointments,
-  fetchAppointmentsByPatient
-} from "../../api/appointments/appointments.api";
+  fetchAppointmentsByPatient,
+  fetchProfessionalAppointmentsByDate
+} from "../../api/appointments.api";
 
-type Slot = {
-  start: string;
-  end: string;
-};
+type Slot = string
 
 type Appointment = {
   id: string;
@@ -62,7 +60,7 @@ const appointmentsSlice = createSlice({
 
       .addCase(fetchAvailableSlots.fulfilled, (state, action) => {
         state.loading = false;
-        state.slots = action.payload.slots;
+        state.slots = action.payload.data;
       })
 
       .addCase(fetchAvailableSlots.rejected, (state, action) => {
@@ -101,7 +99,12 @@ const appointmentsSlice = createSlice({
       .addCase(fetchAppointmentsByPatient.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
-      });
+      })
+
+      .addCase(fetchProfessionalAppointmentsByDate.fulfilled, (state, action) => {
+        state.loading = false;
+        state.appointments = action.payload; // Store the actual booked appointments here
+      })
   },
 });
 

@@ -23,7 +23,7 @@ import "stream-chat-react/dist/css/v2/index.css";
 
 import { useEffect, useState } from "react";
 import { useAppDispatch, useAppSelector } from "../lib/hooks";
-import { fetchStreamToken } from "../api/auth/auth.api";
+import { fetchStreamToken } from "../api/auth.api";
 import { useNavigate } from "react-router-dom";
 import { logout } from "../store/slices/auth.slice";
 import type { UserResponse } from "stream-chat";

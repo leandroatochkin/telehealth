@@ -162,4 +162,34 @@ async getUpcoming(user: any) {
     },
   });
 }
+
+async getByProfessionalAndDate(professionalId: string, date: string) {
+  const startOfDay = new Date(date);
+  startOfDay.setHours(0, 0, 0, 0);
+
+  const endOfDay = new Date(date);
+  endOfDay.setHours(23, 59, 59, 999);
+
+  return prisma.appointment.findMany({
+    where: {
+      professionalId,
+      startTime: {
+        gte: startOfDay,
+        lte: endOfDay,
+      },
+      status: { not: "cancelled" }, // Don't show cancelled ones on the slot list
+    },
+    include: {
+      patient: {
+        select: {
+          name: true,
+          surname: true,
+        },
+      },
+    },
+    orderBy: { startTime: "asc" },
+  });
+}
+
+
 }

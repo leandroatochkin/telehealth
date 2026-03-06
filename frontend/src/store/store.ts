@@ -3,6 +3,7 @@ import authReducer from "./slices/auth.slice";
 import themeReducer from "./slices/theme.slice";
 import appointmentsReducer from "./slices/appointments.slice";
 import professionalReducer from "./slices/professional.slice";
+import prescriptionsReducer from "./slices/prescriptions.slice";
 
 export const store = configureStore({
   reducer: {
@@ -10,6 +11,7 @@ export const store = configureStore({
     theme: themeReducer,
     appointments: appointmentsReducer,
     professional: professionalReducer,
+    prescriptions: prescriptionsReducer 
   },
 });
 

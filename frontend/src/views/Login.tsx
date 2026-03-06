@@ -9,7 +9,7 @@ import {
 } from "@mui/material";
 import { useForm } from "react-hook-form";
 import { useAppDispatch, useAppSelector } from "../lib/hooks";
-import { fetchStreamToken, loginUser } from "../api/auth/auth.api";
+import { fetchStreamToken, loginUser } from "../api/auth.api";
 import { useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 
@@ -21,6 +21,7 @@ interface FormValues {
 export default function LoginPage() {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
+  const user = useAppSelector((state) => state.auth.user);
 
   const { loading, error, token } = useAppSelector(
     (state) => state.auth
@@ -31,11 +32,18 @@ export default function LoginPage() {
   );
 
   useEffect(() => {
-    if (token) {
-      dispatch(fetchStreamToken());
-      navigate("/dashboard");
+  if (!token) return;
+
+  dispatch(fetchStreamToken());
+
+  if (user && user.role) {
+    if (user.role === "PATIENT") {
+      navigate("/dashboard/patient");
+    } else if (user.role === "PROFESSIONAL") {
+      navigate("/dashboard/professional");
     }
-  }, [token, dispatch, navigate]);
+  }
+}, [token, user, dispatch, navigate]); 
 
   const {
     register,
@@ -76,7 +84,7 @@ export default function LoginPage() {
               mb: 2,
             }}
           >
-            Login to Telehealth
+            Loguearse a su cuenta
           </Typography>
 
           {error && (
@@ -153,7 +161,7 @@ export default function LoginPage() {
                 fontWeight: fontWeights.regular,
               }}
             >
-              Don’t have an account?{" "}
+              ¿No tiene una cuenta?{" "}
               <Link
                 to="/auth/signup"
                 style={{
@@ -162,7 +170,7 @@ export default function LoginPage() {
                   textDecoration: "none",
                 }}
               >
-                Sign up
+                Regístrese aquí
               </Link>
             </Typography>
           </Box>
