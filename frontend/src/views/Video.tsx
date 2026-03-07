@@ -10,11 +10,14 @@ import {
 import { useNavigate } from "react-router-dom";
 import { useAppSelector } from "../lib/hooks";
 import { MyUILayout } from "./Layout";
+import { useParams } from "react-router-dom";
+import { notify } from "../lib/notifications";
 
 const apiKey = import.meta.env.VITE_STREAM_API_KEY as string;
 
 export default function VideoStream() {
   const navigate = useNavigate();
+  const { id: callId } = useParams(); // Get the ID from /call/:id
 
   const { user, streamToken, streamLoading } =
     useAppSelector((state) => state.auth);
@@ -24,33 +27,31 @@ export default function VideoStream() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!apiKey || !user || !streamToken) return;
+    // If no callId in URL, we can't join
+    if (!apiKey || !user || !streamToken || !callId) return;
 
     let isMounted = true;
 
     const setupVideo = async () => {
       try {
         setLoading(true);
-
         const videoClient = new StreamVideoClient({
           apiKey,
-          user: {
-            id: user!.id,
-            name: user!.name,
-          },
+          user: { id: user.id, name: user.name || user.username },
           token: streamToken,
         });
 
-        const videoCall = videoClient.call("default", "general-room");
+        // FIX: Use the dynamic callId from the URL
+        const videoCall = videoClient.call("default", callId);
 
         await videoCall.join({ create: true });
 
         if (!isMounted) return;
-
         setClient(videoClient);
         setCall(videoCall);
       } catch (error) {
         console.error("Video setup error:", error);
+        notify("Error al conectar con la cámara", "error");
       } finally {
         if (isMounted) setLoading(false);
       }
@@ -60,10 +61,11 @@ export default function VideoStream() {
 
     return () => {
       isMounted = false;
+      // Cleanup to free up camera/mic
       call?.leave();
       client?.disconnectUser();
     };
-  }, [user, streamToken]);
+  }, [user, streamToken, callId]);
 
   const handleLeaveCall = async () => {
     try {

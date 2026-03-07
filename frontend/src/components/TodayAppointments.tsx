@@ -3,10 +3,12 @@ import { useAppSelector, useAppDispatch } from "../lib/hooks";
 import { notify } from "../lib/notifications";
 import { useEffect } from "react";
 import { fetchPatientAppointments } from "../api/appointments.api";
+import { useNavigate } from "react-router-dom";
 
 export default function TodayAppointments() {
     const dispatch = useAppDispatch();
-  
+    const navigate = useNavigate();
+
   const { appointments } = useAppSelector(
     (state) => state.appointments
   );
@@ -23,10 +25,11 @@ export default function TodayAppointments() {
 
   const handleJoin = (callId: string) => {
 
-    notify("Joining video call...", "info");
+    notify("Uniendose a la videollamada", "info");
+    navigate(`/video/${callId}`);
 
     // navigate to video page
-    console.log("Join call", callId);
+    
   };
 
   return (

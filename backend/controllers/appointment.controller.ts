@@ -177,5 +177,25 @@ app.post<{
     });
   }
 });
+
+app.post("/appointments/:id/end", { preHandler: isAuthenticated }, async (request, reply) => {
+  try {
+    const { id } = request.params as { id: string };
+    const user = (request as any).user;
+
+    // This calls the service we created in previous steps
+    const updatedAppointment = await service.endAppointment(id, user);
+
+    return reply.send({
+      status: "success",
+      data: updatedAppointment
+    });
+  } catch (error: any) {
+    return reply.status(400).send({
+      status: "fail",
+      message: error.message
+    });
+  }
+});
 };
 

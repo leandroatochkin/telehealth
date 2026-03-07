@@ -150,7 +150,7 @@ export default function PrescriptionModal({ open, onClose }: any) {
         </Typography>
         <Stack spacing={3}>
           <TextField
-            label="Patient DNI"
+            label="DNI del Paciente"
             fullWidth
             value={patientId}
             onChange={(e) => setPatientId(e.target.value)}
@@ -170,14 +170,14 @@ export default function PrescriptionModal({ open, onClose }: any) {
                 value={selectedDrug}
                 onChange={(_event, newValue) => setSelectedDrug(newValue)}
                 renderInput={(params) => (
-                  <TextField {...params} label="Search Medication" />
+                  <TextField {...params} label="Buscar Medicamento" />
                 )}
               />
 
               <Stack direction="row" spacing={2}>
 
                 <TextField
-                  label="Quantity"
+                  label="Cantidad"
                   type="number"
                   sx={{ width: "120px" }}
                   value={quantity}
@@ -234,7 +234,7 @@ export default function PrescriptionModal({ open, onClose }: any) {
             onClick={handleGenerate}
             sx={{ py: 1.5, fontWeight: "bold" }}
           >
-            {loading ? "Generating..." : `Generate Prescription (${prescribedDrugs.length})`}
+            {loading ? "Generando..." : `Generar Receta (${prescribedDrugs.length})`}
           </Button>
         </Stack>
       </Box>

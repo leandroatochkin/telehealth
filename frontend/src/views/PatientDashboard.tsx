@@ -74,7 +74,7 @@ export default function PatientDashboardPage() {
 
   if (now < startTime - fiveMinutes) {
     notify(
-      "You can only join the call 5 minutes before the scheduled time.", 
+      "Solo puedes unirte a la llamada 5 minutos antes de que comience. Por favor, regresa más tarde.", 
       "warning"
     );
     return;
@@ -96,7 +96,7 @@ const handleDownloadPrescription = async (id: string) => {
     );
 
     if (!res.ok) {
-      notify("Prescription expired or unavailable", "error");
+      notify("Receta expirada o no disponible", "error");
       return;
     }
 
@@ -111,7 +111,7 @@ const handleDownloadPrescription = async (id: string) => {
     a.remove()
 
   } catch (err) {
-    notify("Failed to download prescription", "error");
+    notify("Error al descargar la receta", "error");
   }
 };
 

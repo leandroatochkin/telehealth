@@ -45,6 +45,8 @@ model User {
 
   prescriptionsWritten  Prescription[] @relation("DoctorPrescriptions")
   prescriptionsReceived Prescription[] @relation("PatientPrescriptions")
+
+  patientHistory MedicalHistory? @relation("PatientHistory")
 }
 
 enum Role {
@@ -138,4 +140,29 @@ model PrescriptionItem {
   createdAt DateTime @default(now())
 
   @@index([prescriptionId])
+}
+
+model MedicalHistory {
+  id        String   @id @default(uuid())
+  patientId String   @unique
+  patient   User     @relation("PatientHistory", fields: [patientId], references: [id])
+  
+  entries   HistoryEntry[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model HistoryEntry {
+  id               String   @id @default(uuid())
+  medicalHistoryId String
+  history          MedicalHistory @relation(fields: [medicalHistoryId], references: [id])
+  
+  doctorId         String
+  doctorName       String   // Snapshot of doctor at time of entry
+  
+  date             DateTime @default(now())
+  details          String   @db.Text
+  diagnostics      String[] // Array of strings for multiple diagnostics
+  
+  createdAt        DateTime @default(now())
 }

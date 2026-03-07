@@ -26,7 +26,7 @@ export default function AppRouter() {
         {/* PROTECTED ROUTES */}
         <Route element={<ProtectedRoute />}>
           {/* <Route path="/dashboard" element={<DashboardPage />} /> */}
-          <Route path="/video" element={<VideoStream />} />
+          <Route path="/video/:id" element={<VideoStream />} />
         </Route>
 
         <Route element={<PatientRoute />}>
