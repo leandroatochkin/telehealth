@@ -2,7 +2,6 @@ import {
   useCall,
   useCallStateHooks,
   CallingState,
-  ParticipantView,
   StreamTheme,
   SpeakerLayout,
   CallControls,

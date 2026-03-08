@@ -38,9 +38,12 @@ export default function TodayAppointments() {
 
       <Typography
         variant="h5"
-        sx={{ mb: 3 }}
+        sx={{ 
+          mb: 3,
+          color: colors.textPrimary
+        }}
       >
-        Today's Appointments
+        Turnos de Hoy
       </Typography>
 
       {appointments.map((appt) => (

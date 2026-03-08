@@ -61,3 +61,18 @@ export const isAuthenticated = async (
     role: currentUser.role,
   };
 };
+
+export const verifyProfessional = (request: any, reply: any) => {
+    if (!request.user) {
+      reply.status(401).send({ message: "Unauthorized" });
+      return false;
+    }
+    if (request.user.role !== "PROFESSIONAL") {
+      reply.status(403).send({
+        status: "fail",
+        message: "Only professionals can access patient history",
+      });
+      return false;
+    }
+    return true;
+  };

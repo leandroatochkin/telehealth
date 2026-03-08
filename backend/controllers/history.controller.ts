@@ -1,27 +1,15 @@
 import { FastifyInstance } from "fastify";
 import { HistoryService } from "../services/history.service.js";
-import { isAuthenticated } from "../middleware/auth.middleware.js";
+import { isAuthenticated, verifyProfessional } from "../middleware/auth.middleware.js";
 
 const service = new HistoryService();
 
 export const historyController = async (app: FastifyInstance) => {
-  // Search patient by DNI
+  
+
+  // 1. Search patient by DNI (Initial Search)
   app.get("/history/search/:dni", { preHandler: isAuthenticated }, async (request: any, reply) => {
-
-
-        if (!request.user) {
-            return reply.status(401).send({ message: "Unauthorized" });
-            }
-
-        const role = request.user.role;
-
-        if (role !== "PROFESSIONAL") {
-        return reply.status(403).send({
-            status: "fail",
-            message: "Only professionals can view patient history",
-        });
-        }
-
+    if (!verifyProfessional(request, reply)) return;
 
     try {
       const patient = await service.getPatientByDni(request.params.dni);
@@ -31,24 +19,32 @@ export const historyController = async (app: FastifyInstance) => {
     }
   });
 
-  // Add new entry
-  app.post("/history/:patientId/entries", { preHandler: isAuthenticated }, async (request: any, reply) => {
-    
-    if (!request.user) {
-            return reply.status(401).send({ message: "Unauthorized" });
-            }
+  // 2. Get Paginated Entries (The new route)
+  app.get("/history/:historyId/entries", { preHandler: isAuthenticated }, async (request: any, reply) => {
+    if (!verifyProfessional(request, reply)) return;
 
-        const role = request.user.role;
-
-        if (role !== "PROFESSIONAL") {
-        return reply.status(403).send({
-            status: "fail",
-            message: "Only professionals can view patient history",
-        });
-        }
+    const { historyId } = request.params;
+    const { page, limit, date, search } = request.query as any;
 
     try {
+      const result = await service.getEntries(historyId, {
+        page: Number(page || 1),
+        limit: Number(limit || 15),
+        date: date as string,
+        search: search as string
+      });
 
+      return reply.send({ status: "success", data: result });
+    } catch (error: any) {
+      return reply.status(400).send({ status: "fail", message: error.message });
+    }
+  });
+
+  // 3. Add new entry
+  app.post("/history/:patientId/entries", { preHandler: isAuthenticated }, async (request: any, reply) => {
+    if (!verifyProfessional(request, reply)) return;
+
+    try {
       const professional = request.user;
       const entry = await service.addEntry(
         request.params.patientId, 

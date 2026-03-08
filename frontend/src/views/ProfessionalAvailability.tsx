@@ -18,6 +18,8 @@ import {
   fetchProfessionalAppointmentsByDate,
 } from "../api/appointments.api";
 
+import { notify } from "../lib/notifications";
+
 export default function ProfessionalAvailabilityPage() {
   const dispatch = useAppDispatch();
 
@@ -51,10 +53,15 @@ export default function ProfessionalAvailabilityPage() {
   dispatch(fetchProfessionalAppointmentsByDate({ professionalId: user?.id ?? "", date: dateIso, token }));
 };
 
-  const handleCreateSlots = () => {
-    if (!date || !token) return;
+  const handleCreateSlots = async () => {
+  if (!date || !token) {
+    notify("Por favor seleccione una fecha", "warning");
+    return;
+  }
 
-    dispatch(
+  try {
+    // 1. Dispatch the creation
+    const resultAction = await dispatch(
       createAvailability({
         date: date.toISOString(),
         startTime,
@@ -62,8 +69,24 @@ export default function ProfessionalAvailabilityPage() {
         token,
       })
     );
-  };
 
+    // 2. Check if the creation was successful
+    if (createAvailability.fulfilled.match(resultAction)) {
+      notify("Turnos generados con éxito", "success");
+
+      // 3. AUTO-REFRESH: Fetch the new slots immediately
+      const dateIso = date.toISOString();
+      const professionalId = user?.id ?? "";
+
+      dispatch(fetchAvailableSlots({ professionalId, date: dateIso, token }));
+      dispatch(fetchProfessionalAppointmentsByDate({ professionalId, date: dateIso, token }));
+    } else {
+      notify("Error al crear turnos", "error");
+    }
+  } catch (error) {
+    notify("Error de red", "error");
+  }
+};
   return (
     <Box
       sx={{

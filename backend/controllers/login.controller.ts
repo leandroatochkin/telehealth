@@ -25,6 +25,8 @@ export const loginController = async (
           email: user.email,
           username: user.username,
           role: user.role,
+          name: user.name,
+          surname: user.surname,
         },
      
       });

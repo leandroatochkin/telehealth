@@ -88,7 +88,7 @@ export default function PrescriptionModal({ open, onClose }: any) {
     setPrescribedDrugs([...prescribedDrugs, newEntry]);
     setSelectedDrug(null);
     setQuantity("1");
-    notify("Added to list", "info");
+    notify("Añadido a la receta", "info");
   };
 
 
@@ -130,13 +130,13 @@ export default function PrescriptionModal({ open, onClose }: any) {
   }));
 
   if (createPrescription.fulfilled.match(result)) {
-    notify("Prescription created successfully", "success");
+    notify("Receta creada exitosamente", "success");
     setPrescribedDrugs([]);
     setPatientId("");
     onClose();
   } else {
     // If it failed, action.payload contains the error message from rejectWithValue
-    notify(result.payload || "Failed to create prescription", "error");
+    notify(result.payload || "Error al crear la receta", "error");
   }
 };
 

@@ -8,111 +8,43 @@ import AddIcon from "@mui/icons-material/Add";
 import PrintIcon from "@mui/icons-material/Print";
 import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
 import FilterListIcon from "@mui/icons-material/FilterList";
-import { useState, useMemo } from "react";
-import { useAppSelector } from "../lib/hooks";
+import { useState, useEffect } from "react";
+import { useAppSelector, useAppDispatch } from "../lib/hooks";
 import { notify } from "../lib/notifications";
+import { searchPatientByDni, fetchHistoryEntries, addHistoryEntry} from "../api/history.api";
+
+// ... (imports remain the same)
 
 export default function PatientHistory() {
+  const dispatch = useAppDispatch();
   const { token } = useAppSelector(state => state.auth);
-    const { colors } =
-    useAppSelector((state) => state.theme);
+  const { colors } = useAppSelector((state) => state.theme);
   
-  // Search State
-  const [dni, setDni] = useState("");
-  const [patient, setPatient] = useState<any>(null);
+  // Redux State
+  const { patient, entries, totalEntries, entriesLoading, loading } = useAppSelector(state => state.history);
 
-  // Filter State
+  // Local UI State
+  const [dni, setDni] = useState("");
   const [filterDate, setFilterDate] = useState("");
+  const [filterText, setFilterText] = useState("");
   const [page, setPage] = useState(1);
   const itemsPerPage = 15;
 
-  // New Entry State
   const [showAddForm, setShowAddForm] = useState(false);
   const [details, setDetails] = useState("");
   const [diagInput, setDiagInput] = useState("");
   const [diagnostics, setDiagnostics] = useState<string[]>([]);
   const [entryDate, setEntryDate] = useState(new Date().toISOString().split('T')[0]);
-  const [filterText, setFilterText] = useState("");
-  // 1. CLEAR STATE ON ADD
-  const handleOpenAddForm = () => {
-    setDetails("");
-    setDiagnostics([]);
-    setDiagInput("");
-    setEntryDate(new Date().toISOString().split('T')[0]);
-    setShowAddForm(true);
-  };
 
-  const handleSearch = async () => {
-    try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/history/search/${dni}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      const json = await res.json();
-      if (json.status === "success") {
-        setPatient(json.data);
-        setPage(1); // Reset page on new search
-      }
-      else notify(json.message, "error");
-    } catch (e) { notify("Error searching patient", "error"); }
-  };
-
-  // 2. DATE FILTERING & PAGINATION LOGIC
-  const filteredEntries = useMemo(() => {
-    if (!patient?.patientHistory?.entries) return [];
-    
-    let entries = [...patient.patientHistory.entries];
-    
-    // Filter by Date
-    if (filterDate) {
-      entries = entries.filter((e: any) => 
-        new Date(e.date).toISOString().split('T')[0] === filterDate
-      );
-    }
-
-    // Filter by Text (Details or Diagnostics)
-    if (filterText) {
-      const query = filterText.toLowerCase();
-      entries = entries.filter((e: any) => {
-        const inDetails = e.details.toLowerCase().includes(query);
-        const inDiagnostics = e.diagnostics.some((d: string) => 
-          d.toLowerCase().includes(query)
-        );
-        return inDetails || inDiagnostics;
-      });
-    }
-
-    return entries;
-  }, [patient, filterDate, filterText]); // Dependencies updated
-
-  const paginatedEntries = useMemo(() => {
-    const start = (page - 1) * itemsPerPage;
-    return filteredEntries.slice(start, start + itemsPerPage);
-  }, [filteredEntries, page]);
-
-  const handleAddDiagnostic = () => {
-    if (diagInput) {
-      setDiagnostics([...diagnostics, diagInput]);
-      setDiagInput("");
+  // 1. Initial Search
+  const handleSearch = () => {
+    if (dni.trim() && token) {
+      dispatch(searchPatientByDni({ dni, token }));
+      setPage(1); // Reset page on new patient search
     }
   };
 
-  const submitEntry = async () => {
-    const res = await fetch(`${import.meta.env.VITE_API_URL}/history/${patient.id}/entries`, {
-      method: 'POST',
-      headers: { 
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}` 
-      },
-      body: JSON.stringify({ date: entryDate, details, diagnostics })
-    });
-    if (res.ok) {
-      notify("Entry added", "success");
-      setShowAddForm(false);
-      handleSearch(); 
-    }
-  };
-
-  const downloadPdf = async (entryId?: string) => {
+    const downloadPdf = async (entryId?: string) => {
     try {
       let url = `${import.meta.env.VITE_API_URL}/history/patient/${patient.id}/pdf`;
       if (entryId) url += `?entryId=${entryId}`;
@@ -128,23 +60,86 @@ export default function PatientHistory() {
     } catch (e) { notify("Error generating PDF", "error"); }
   };
 
-  const highlightText = (text: string, query: string) => {
-  if (!query) return text;
-  const parts = text.split(new RegExp(`(${query})`, "gi"));
-  return (
-    <span>
-      {parts.map((part, i) =>
-        part.toLowerCase() === query.toLowerCase() ? (
-          <mark key={i} style={{ backgroundColor: "#fff59d", padding: "0 2px" }}>
-            {part}
-          </mark>
-        ) : (
-          part
-        )
-      )}
-    </span>
-  );
+  // 2. Fetch Entries Effect (The "Source of Truth")
+  useEffect(() => {
+    // We use patient.patientHistory.id which comes from the searchPatientByDni call
+    if (token && patient?.patientHistory?.id) {
+      dispatch(fetchHistoryEntries({ 
+        historyId: patient.patientHistory.id, 
+        token, 
+        page, 
+        search: filterText, 
+        date: filterDate 
+      }));
+    }
+  }, [patient?.patientHistory?.id, page, filterText, filterDate, dispatch, token]);
+
+  // --- Helpers ---
+  const handleOpenAddForm = () => {
+    setDetails("");
+    setDiagnostics([]);
+    setDiagInput("");
+    setEntryDate(new Date().toISOString().split('T')[0]);
+    setShowAddForm(true);
+  };
+
+  const submitEntry = async () => {
+  if (!details.trim()) {
+    notify("El detalle de la consulta es obligatorio", "error");
+    return;
+  }
+
+  if (token && patient) {
+    try {
+      // dispatch return a promise
+      const resultAction = await dispatch(addHistoryEntry({ 
+        patientId: patient.id, 
+        token, 
+        details, 
+        diagnostics, 
+        date: entryDate 
+      }));
+
+      if (addHistoryEntry.fulfilled.match(resultAction)) {
+        notify("Entrada guardada correctamente", "success");
+        setShowAddForm(false);
+        
+        // OPTIONAL: If you want to ensure you are seeing the latest 15 
+        // after adding one, you can trigger a refresh:
+        // dispatch(fetchHistoryEntries({ historyId: patient.patientHistory.id, token, page: 1 }));
+      } else {
+        notify("Error al guardar la entrada", "error");
+      }
+    } catch (err) {
+      notify("Error de conexión", "error");
+    }
+  }
 };
+
+const handleAddDiagnostic = () => {
+  const trimmed = diagInput.trim();
+  if (trimmed && !diagnostics.includes(trimmed)) {
+    setDiagnostics([...diagnostics, trimmed]);
+    setDiagInput("");
+  }
+};
+
+const handleRemoveDiagnostic = (index: number) => {
+  setDiagnostics(diagnostics.filter((_, i) => i !== index));
+};
+  const highlightText = (text: string, query: string) => {
+    if (!query) return text;
+    const parts = text.split(new RegExp(`(${query})`, "gi"));
+    return (
+      <span>
+        {parts.map((part, i) =>
+          part.toLowerCase() === query.toLowerCase() ? (
+            <mark key={i} style={{ backgroundColor: "#fff59d", padding: "0 2px" }}>{part}</mark>
+          ) : (part)
+        )}
+      </span>
+    );
+  };
 
   return (
     <Box sx={{ p: 3 }}>
@@ -152,14 +147,18 @@ export default function PatientHistory() {
         Historia Clínica por Paciente
       </Typography>
 
+      {/* SEARCH BAR */}
       <Paper sx={{ p: 2, mb: 4, display: 'flex', gap: 2 }}>
         <TextField 
           label="Buscar por DNI del Paciente" 
           value={dni} 
           onChange={(e) => setDni(e.target.value)} 
           fullWidth
+          onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
         />
-        <Button variant="contained" onClick={handleSearch}>Buscar</Button>
+        <Button variant="contained" onClick={handleSearch} disabled={loading}>
+          {loading ? "Buscando..." : "Buscar"}
+        </Button>
       </Paper>
 
       {patient && (
@@ -172,7 +171,45 @@ export default function PatientHistory() {
             </Stack>
           </Box>
 
-          {/* DATE FILTER UI */}
+                    {showAddForm && (
+            <Paper sx={{ p: 3, mb: 4, border: `2px solid ${colors.primary}`, borderRadius: 2 }}>
+              <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: 'bold' }}>Registrar Nueva Entrada Médica</Typography>
+              <TextField 
+                type="date" label="Fecha de la Consulta" fullWidth sx={{ mb: 2 }} 
+                value={entryDate} onChange={e => setEntryDate(e.target.value)}
+                InputLabelProps={{ shrink: true }}
+              />
+              <TextField 
+                label="Detalle y Evolución" multiline rows={4} fullWidth sx={{ mb: 2 }}
+                value={details} onChange={e => setDetails(e.target.value)}
+                placeholder="Escriba aquí las notas de la consulta..."
+              />
+              <Box sx={{ mb: 2 }}>
+                <Stack direction="row" spacing={1} sx={{ mb: 1 }}>
+                  <TextField 
+                    size="small" label="Diagnóstico / Etiqueta" 
+                    value={diagInput} onChange={e => setDiagInput(e.target.value)}
+                    onKeyPress={(e) => e.key === 'Enter' && handleAddDiagnostic()}
+                  />
+                  <Button variant="outlined" onClick={handleAddDiagnostic}>Añadir</Button>
+                </Stack>
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                  {diagnostics.map((d, i) => (
+                    <Chip key={i} label={d} onDelete={() => handleRemoveDiagnostic(i)} color="primary" variant="outlined" />
+                  ))}
+                </Box>
+              </Box>
+              <Stack direction="row" spacing={2}>
+                <Button variant="contained" onClick={submitEntry} color="primary">Guardar Entrada</Button>
+                <Button variant="text" color="error" onClick={() => setShowAddForm(false)}>Cancelar</Button>
+              </Stack>
+            </Paper>
+          )}
+
+          {
+            !showAddForm && (
+              <>
+          {/* FILTERS */}
           <Paper sx={{ p: 2, mb: 2, display: 'flex', alignItems: 'center', gap: 2, bgcolor: '#f5f5f5' }}>
             <FilterListIcon color="action" />
             <TextField 
@@ -187,48 +224,20 @@ export default function PatientHistory() {
               onChange={(e) => { setFilterText(e.target.value); setPage(1); }}
               sx={{ flex: 1 }}
             />
-            {(filterDate || filterText) && (
-              <Button 
-                variant="text" 
-                size="small" 
-                onClick={() => { setFilterDate(""); setFilterText(""); }}
-              >
-                Limpiar
-              </Button>
-            )}
           </Paper>
 
-          {showAddForm && (
-            <Paper sx={{ p: 3, mb: 4, border: '2px solid #1976d2' }}>
-              <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: 'bold' }}>Nueva Entrada Médica</Typography>
-              <TextField 
-                type="date" label="Fecha" fullWidth sx={{ mb: 2 }} 
-                value={entryDate} onChange={e => setEntryDate(e.target.value)}
-                InputLabelProps={{ shrink: true }}
-              />
-              <TextField 
-                label="Detalle de Consulta" multiline rows={4} fullWidth sx={{ mb: 2 }}
-                value={details} onChange={e => setDetails(e.target.value)}
-              />
-              <Box sx={{ mb: 2 }}>
-                <Stack direction="row" spacing={1} sx={{ mb: 1 }}>
-                  <TextField size="small" label="Diagnóstico" value={diagInput} onChange={e => setDiagInput(e.target.value)} />
-                  <Button onClick={handleAddDiagnostic}>Añadir</Button>
-                </Stack>
-                {diagnostics.map((d, i) => <Chip key={i} label={d} sx={{ m: 0.5 }} onDelete={() => setDiagnostics(diagnostics.filter((_, idx) => idx !== i))} />)}
-              </Box>
-              <Stack direction="row" spacing={2}>
-                <Button variant="contained" onClick={submitEntry}>Guardar</Button>
-                <Button variant="text" color="error" onClick={() => setShowAddForm(false)}>Cancelar</Button>
-              </Stack>
-            </Paper>
-          )}
 
           <Divider sx={{ mb: 2 }} />
 
-          {/* 3. SCROLLABLE CONTAINER */}
-          <Box sx={{ maxHeight: '600px', overflowY: 'auto', pr: 1, mb: 3 }}>
-            {paginatedEntries.length > 0 ? paginatedEntries.map((entry: any) => (
+          {/* 3. SCROLLABLE CONTAINER USING REDUX STATE */}
+          <Box sx={{ maxHeight: '375px', overflowY: 'scroll', pr: 1, mb: 3, position: 'relative' }}>
+            {entriesLoading && (
+               <Box sx={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, bgcolor: 'rgba(255,255,255,0.7)', zIndex: 1, display: 'flex', justifyContent: 'center', pt: 5 }}>
+                  <Typography variant="body2">Actualizando registros...</Typography>
+               </Box>
+            )}
+
+            {entries && entries.length > 0 ? entries.map((entry: any) => (
               <Accordion key={entry.id} sx={{ mb: 1 }}>
                 <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                   <Typography sx={{ width: '33%', flexShrink: 0, fontWeight: 'bold' }}>
@@ -237,45 +246,46 @@ export default function PatientHistory() {
                   <Typography sx={{ color: 'text.secondary' }}>{entry.doctorName}</Typography>
                 </AccordionSummary>
                 <AccordionDetails>
-                {/* HIGHLIGHTED DETAILS */}
-                <Typography variant="body1" sx={{ mb: 2, whiteSpace: 'pre-line' }}>
-                  {highlightText(entry.details, filterText)}
-                </Typography>
-
-                <Box sx={{ mb: 2 }}>
-                  {entry.diagnostics.map((d: string, i: number) => (
-                    <Chip 
-                      key={i} 
-                      // HIGHLIGHTED CHIPS
-                      label={highlightText(d, filterText)} 
-                      color={d.toLowerCase().includes(filterText.toLowerCase()) && filterText ? "secondary" : "primary"}
-                      variant="outlined" 
-                      sx={{ mr: 1, mb: 1 }} 
-                    />
-                  ))}
-                </Box>
-
-                <Button size="small" startIcon={<PrintIcon />} onClick={() => downloadPdf(entry.id)}>
-                  Imprimir Entrada
-                </Button>
-              </AccordionDetails>
+                  <Typography variant="body1" sx={{ mb: 2, whiteSpace: 'pre-line' }}>
+                    {highlightText(entry.details, filterText)}
+                  </Typography>
+                  <Box sx={{ mb: 2 }}>
+                    {entry.diagnostics.map((d: string, i: number) => (
+                      <Chip 
+                        key={i} 
+                        label={highlightText(d, filterText)} 
+                        color={filterText && d.toLowerCase().includes(filterText.toLowerCase()) ? "secondary" : "primary"}
+                        variant="outlined" 
+                        sx={{ mr: 1, mb: 1 }} 
+                      />
+                    ))}
+                  </Box>
+                  <Button size="small" startIcon={<PrintIcon />} onClick={() => downloadPdf(entry.id)}>
+                    Imprimir Entrada
+                  </Button>
+                </AccordionDetails>
               </Accordion>
-            )) : (
-              <Typography sx={{ textAlign: 'center', py: 4, color: 'text.secondary' }}>No se encontraron entradas.</Typography>
+            )) : !entriesLoading && (
+              <Typography sx={{ textAlign: 'center', py: 4, color: 'text.secondary' }}>
+                No se encontraron entradas para este paciente.
+              </Typography>
             )}
           </Box>
 
-          {/* 4. PAGINATION UI */}
-          {filteredEntries.length > itemsPerPage && (
-            <Box sx={{ display: 'flex', justifyContent: 'center', pb: 4 }}>
+          {/* 4. PAGINATION UI FROM REDUX TOTALS */}
+          {totalEntries > itemsPerPage && (
+            <Box sx={{ display: 'flex', justifyContent: 'center'}}>
               <Pagination 
-                count={Math.ceil(filteredEntries.length / itemsPerPage)} 
+                count={Math.ceil(totalEntries / itemsPerPage)} 
                 page={page} 
                 onChange={(_, v) => setPage(v)} 
                 color="primary" 
               />
             </Box>
           )}
+          </>
+            )
+          }
         </Box>
       )}
     </Box>

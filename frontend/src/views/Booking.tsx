@@ -5,9 +5,12 @@ import { fetchAvailableSlots, createAppointment } from "../api/appointments.api"
 import DateSelector from "../components/DateSelector";
 import SlotList from "../components/SlotList";
 import { notify } from "../lib/notifications";
+import { useNavigate } from "react-router-dom"; // Added for navigation
+import ArrowBackIcon from "@mui/icons-material/ArrowBack"; // Added for the back button
 
 export default function BookingPage() {
   const dispatch = useAppDispatch();
+  const navigate = useNavigate(); // Hook for back button
   const { slots, loading } = useAppSelector((state) => state.appointments);
   const { token, user } = useAppSelector((state) => state.auth);
   const { colors, shadows } = useAppSelector((state) => state.theme);
@@ -49,21 +52,88 @@ export default function BookingPage() {
   };
 
   return (
-    <Box sx={{ width: "100vw", height: "100dvh", backgroundColor: colors.background, display: "flex", gap: 3, p: 3 }}>
-      <Box sx={{ flex: 0.5, backgroundColor: colors.surface, borderRadius: 3, boxShadow: shadows.lg }}>
-        <DateSelector value={date} onChange={handleDateChange} />
+    <Box 
+      sx={{ 
+        width: "100vw", 
+        minHeight: "100dvh", // Changed height to minHeight for mobile scrolling
+        backgroundColor: colors.background, 
+        display: "flex", 
+        flexDirection: { xs: "column", md: "row" }, // Row on Desktop, Column on Mobile
+        gap: 3, 
+        //p: { xs: 2, md: 3 } // Responsive padding
+      }}
+    >
+      {/* LEFT COLUMN / TOP ON MOBILE: BACK BUTTON & CALENDAR */}
+      <Box 
+        sx={{ 
+          flex: { xs: "none", md: 0.5 }, 
+          display: "flex", 
+          flexDirection: "column", 
+          gap: 2 
+        }}
+      >
+        {/* BACK TO DASHBOARD BUTTON */}
+        <Button
+          startIcon={<ArrowBackIcon />}
+          onClick={() => navigate("/dashboard/patient")}
+          sx={{
+            alignSelf: "flex-start",
+            color: colors.textPrimary,
+            textTransform: "none",
+            fontWeight: "bold"
+          }}
+        >
+          Volver al Panel
+        </Button>
+
+        <Box 
+          sx={{ 
+            backgroundColor: colors.surface, 
+            borderRadius: 3, 
+            boxShadow: shadows.lg,
+            overflow: "hidden" // Ensures calendar doesn't break border radius
+          }}
+        >
+          <DateSelector value={date} onChange={handleDateChange} />
+        </Box>
       </Box>
 
-      <Box sx={{ flex: 0.5, backgroundColor: colors.surface, borderRadius: 3, boxShadow: shadows.lg, p: 2 }}>
+      {/* RIGHT COLUMN / BOTTOM ON MOBILE: SLOT LIST */}
+      <Box 
+        sx={{ 
+          flex: { xs: "none", md: 0.5 }, 
+          backgroundColor: colors.surface, 
+          borderRadius: 3, 
+          boxShadow: shadows.lg, 
+          p: 2,
+          minHeight: { xs: "300px", md: "auto" }, // Ensures area is visible on mobile
+          maxHeight: { md: "calc(100vh - 48px)" }, // Scrollable slots on desktop
+          overflowY: "auto"
+        }}
+      >
+        <Typography 
+          variant="h6" 
+          sx={{ mb: 2, color: colors.textPrimary, textAlign: "center", fontWeight: "bold" }}
+        >
+          {date ? `Turnos para el ${date.toLocaleDateString("es-AR")}` : "Seleccione un fecha"}
+        </Typography>
+
         {loading ? (
-          <Box sx={{ height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}><CircularProgress /></Box>
+          <Box sx={{ height: "100%", minHeight: "200px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <CircularProgress />
+          </Box>
         ) : (
           <SlotList slots={slots} appointments={[]} onSelect={(slot) => setSelectedSlot(slot)} />
         )}
       </Box>
 
       {/* CONFIRMATION DIALOG */}
-      <Dialog open={Boolean(selectedSlot)} onClose={() => setSelectedSlot(null)}>
+      <Dialog 
+        open={Boolean(selectedSlot)} 
+        onClose={() => setSelectedSlot(null)}
+        fullWidth
+        maxWidth="xs"
+      >
         <DialogTitle>Confirmar Turno</DialogTitle>
         <DialogContent>
           <Typography>
@@ -72,7 +142,7 @@ export default function BookingPage() {
             <strong>{selectedSlot && new Date(selectedSlot).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</strong>?
           </Typography>
         </DialogContent>
-        <DialogActions>
+        <DialogActions sx={{ p: 2 }}>
           <Button onClick={() => setSelectedSlot(null)}>Cancelar</Button>
           <Button onClick={handleConfirmBooking} variant="contained" color="primary">Confirmar Reserva</Button>
         </DialogActions>

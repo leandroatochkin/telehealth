@@ -24,7 +24,7 @@ export default function SlotList({ slots, appointments, onSelect }: Props) {
           <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, mt: 1 }}>
             {appointments.map((app) => (
               <Paper
-                key={app.id}
+                key={app.id + Math.random()} // Use a unique key for each appointment
                 sx={{
                   p: 1,
                   backgroundColor: "#ffebee",
@@ -50,7 +50,7 @@ export default function SlotList({ slots, appointments, onSelect }: Props) {
         <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, mt: 1 }}>
           {slots.map((slot) => (
             <Button
-              key={slot}
+              key={slot + Math.random()} // Use a unique key for each slot
               variant="outlined"
               color="success"
               onClick={() => onSelect(slot)}

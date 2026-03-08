@@ -50,7 +50,12 @@ export default function ProfessionalDashboard() {
         }}
       >
 
-        <Typography variant="h6">
+        <Typography 
+        variant="h6"
+        sx={{
+          color: colors.textPrimary
+        }}
+        >
           Panel del Profesional
         </Typography>
 
