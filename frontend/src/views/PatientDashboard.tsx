@@ -72,6 +72,7 @@ export default function PatientDashboardPage() {
     }, [token]);
 
   const upcoming = appointments?.[0];
+console.log("Upcoming appointment:", upcoming); // Debug log to check upcoming appointment data
 
   const handleJoinCall = (appointment: any) => {
   const startTime = new Date(appointment.startTime).getTime();
@@ -80,15 +81,16 @@ export default function PatientDashboardPage() {
   // 5 minutes in milliseconds
   const fiveMinutes = 5 * 60 * 1000;
 
-  if (now < startTime - fiveMinutes) {
-    notify(
-      "Solo puedes unirte a la llamada 5 minutos antes de que comience. Por favor, regresa más tarde.", 
-      "warning"
-    );
-    return;
-  }
+  // if (now < startTime - fiveMinutes) {
+  //   notify(
+  //     "Solo puedes unirte a la llamada 5 minutos antes de que comience. Por favor, regresa más tarde.", 
+  //     "warning"
+  //   );
+  //   return;
+  // }
+  console.log("Joining appointment:", appointment); // Debug log to check appointment ID
 
-  navigate(`/call/${appointment.callId || appointment.id}`);
+  navigate(`/video/${appointment}`);
     };
 
   const handleDownloadPrescription = async (id: string) => {
@@ -332,7 +334,10 @@ const handleLogout = () => {
                   backgroundColor: colors.primary,
                   textTransform: "none",
                 }}
-                onClick={() => handleJoinCall(upcoming)}
+                onClick={() => {
+                  console.log("Joining appointment with ID:", upcoming.id); // Debug log to check appointment ID
+                  handleJoinCall(upcoming.id)
+                }}
               >
                 Unirse a la Llamada de Video
               </Button>

@@ -12,6 +12,8 @@ export default function TodayAppointments() {
   const { appointments } = useAppSelector(
     (state) => state.appointments
   );
+  console.log("Appointments from state:", appointments); // Debugging line
+
 
   const { token } = useAppSelector((state) => state.auth);
   const { colors } =
@@ -86,7 +88,7 @@ export default function TodayAppointments() {
 
           <Button
             variant="contained"
-            onClick={() => handleJoin(appt.callId)}
+            onClick={() => handleJoin(appt.id)}
           >
             Unirse a la Videollamada
           </Button>

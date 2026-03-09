@@ -29,7 +29,7 @@ export default function AdminChatModal({
       // Note: "admin-support" is a hardcoded ID. 
       // Ensure this is unique per user if it's a 1-on-1 support chat.
       const supportChannel = chatClient.channel("messaging", `support-${userId}`, {
-        members: [userId, 'admin'], // Assuming 'admin' exists
+        members: [userId], // Assuming 'admin' exists
         name: 'Soporte Técnico'
       });
 
@@ -44,7 +44,7 @@ export default function AdminChatModal({
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
-      <Box sx={{ height: 600 }}> {/* Increased height for better visibility */}
+      <Box > {/* Increased height for better visibility */}
         {/* 2. WRAP IN A DIV WITH str-chat CLASS OR USE theme PROP */}
         <div className="str-chat"> 
           <Chat client={chatClient} theme="messaging light">

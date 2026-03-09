@@ -178,7 +178,7 @@ app.post<{
   }
 });
 
-app.post("/appointments/:id/end", { preHandler: isAuthenticated }, async (request, reply) => {
+app.get("/appointments/:id/end", { preHandler: isAuthenticated }, async (request, reply) => {
   try {
     const { id } = request.params as { id: string };
     const user = (request as any).user;

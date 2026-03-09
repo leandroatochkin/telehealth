@@ -27,45 +27,49 @@ export default function VideoStream() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // If no callId in URL, we can't join
-    if (!apiKey || !user || !streamToken || !callId) return;
+  if (!apiKey || !user || !streamToken || !callId) return;
 
-    let isMounted = true;
+  let isMounted = true;
+  let videoClient: StreamVideoClient;
+  let videoCall: Call;
 
-    const setupVideo = async () => {
-      try {
-        setLoading(true);
-        const videoClient = new StreamVideoClient({
-          apiKey,
-          user: { id: user.id, name: user.name || user.username },
-          token: streamToken,
-        });
+  const setupVideo = async () => {
+    try {
+      setLoading(true);
 
-        // FIX: Use the dynamic callId from the URL
-        const videoCall = videoClient.call("default", callId);
+      videoClient = StreamVideoClient.getOrCreateInstance({
+        apiKey,
+        user: { id: user.id, name: user.name || user.username },
+        token: streamToken,
+      });
 
+      videoCall = videoClient.call("default", callId);
+
+      // 🔴 IMPORTANT: prevent double join
+      if (videoCall.state.callingState !== "joined") {
         await videoCall.join({ create: true });
-
-        if (!isMounted) return;
-        setClient(videoClient);
-        setCall(videoCall);
-      } catch (error) {
-        console.error("Video setup error:", error);
-        notify("Error al conectar con la cámara", "error");
-      } finally {
-        if (isMounted) setLoading(false);
       }
-    };
 
-    setupVideo();
+      if (!isMounted) return;
 
-    return () => {
-      isMounted = false;
-      // Cleanup to free up camera/mic
-      call?.leave();
-      client?.disconnectUser();
-    };
-  }, [user, streamToken, callId]);
+      setClient(videoClient);
+      setCall(videoCall);
+    } catch (error) {
+      console.error("Video setup error:", error);
+      notify("Error al conectar con la cámara", "error");
+    } finally {
+      if (isMounted) setLoading(false);
+    }
+  };
+
+  setupVideo();
+
+  return () => {
+    isMounted = false;
+    videoCall?.leave();
+    videoClient?.disconnectUser();
+  };
+}, [user, streamToken, callId]);
 
   const handleLeaveCall = async () => {
     try {
@@ -76,7 +80,11 @@ export default function VideoStream() {
     } finally {
       setCall(null);
       setClient(null);
-      navigate("/dashboard");
+      if(user.role === "PATIENT") {
+        navigate('/dashboard/patient');
+      } else {
+        navigate('/dashboard/professional');
+      }
     }
   };
 
@@ -127,7 +135,7 @@ export default function VideoStream() {
     >
       <StreamVideo client={client}>
         <StreamCall call={call}>
-          <MyUILayout />
+          <MyUILayout callId={callId ?? ''} />
         </StreamCall>
       </StreamVideo>
 

@@ -11,7 +11,11 @@ import { useNavigate } from 'react-router-dom';
 import { notify } from '../lib/notifications';
 import '@stream-io/video-react-sdk/dist/css/styles.css';
 
-export function MyUILayout() {
+interface LayoutProps {
+  callId: string;
+}
+
+export function MyUILayout({ callId }: LayoutProps) {
   const call = useCall();
   const navigate = useNavigate();
   const { useCallCallingState } = useCallStateHooks();
@@ -24,8 +28,8 @@ export function MyUILayout() {
 
     try {
       // 1. Notify Backend to mark as 'completed'
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/appointments/${call?.id}/end`, {
-        method: 'POST',
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/appointments/${callId}/end`, {
+        method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -38,7 +42,7 @@ export function MyUILayout() {
       await call?.leave();
       
       notify("Consulta finalizada con éxito", "success");
-      navigate('/dashboard');
+      navigate('/dashboard/professional');
     } catch (error) {
       console.error(error);
       notify("Error al finalizar la consulta", "error");
@@ -55,7 +59,7 @@ export function MyUILayout() {
 
   return (
     <StreamTheme>
-      <div style={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
+      <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', width: '100vw' }}>
         {/* VIDEO GRID */}
         <div style={{ flex: 1 }}>
           <SpeakerLayout />
