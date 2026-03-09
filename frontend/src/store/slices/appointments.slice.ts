@@ -3,7 +3,8 @@ import {
   fetchAvailableSlots,
   fetchPatientAppointments,
   fetchAppointmentsByPatient,
-  fetchProfessionalAppointmentsByDate
+  fetchProfessionalAppointmentsByDate,
+  fetchProfessionals
 } from "../../api/appointments.api";
 
 type Slot = string
@@ -27,11 +28,18 @@ interface AppointmentState {
   appointments: Appointment[];
   loading: boolean;
   error: string | null;
+  professionals: ProfessionalDTO[]
 }
 
 type Professional = {
     username: string;
     email: string;
+}
+
+type ProfessionalDTO = {
+    id: string
+    name: string
+    surname: string
 }
 
 
@@ -40,6 +48,7 @@ const initialState: AppointmentState = {
   appointments: [],
   loading: false,
   error: null,
+  professionals: []
 };
 
 const appointmentsSlice = createSlice({
@@ -105,6 +114,22 @@ const appointmentsSlice = createSlice({
         state.loading = false;
         state.appointments = action.payload; // Store the actual booked appointments here
       })
+
+      .addCase(fetchProfessionals.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+
+      .addCase(fetchProfessionals.fulfilled, (state, action) => {
+        state.loading = false;
+        state.professionals = action.payload.data || [];
+      })
+
+      .addCase(fetchProfessionals.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
+
   },
 });
 

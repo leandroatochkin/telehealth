@@ -57,7 +57,22 @@ export class AvailabilityService {
         slotStart.setMinutes(slotStart.getMinutes() + 30);
       }
     }
-
+    console.log("Slots: ", slots)
     return slots;
+  }
+
+  async getProfessionals() {
+    const professionals = await prisma.user.findMany({
+      where: {
+        role: "PROFESSIONAL", // Make sure this matches your Enum or String in schema.prisma
+      },
+      select: {
+        id: true,
+        name: true,
+        surname: true,
+      },
+    });
+
+    return professionals;
   }
 }

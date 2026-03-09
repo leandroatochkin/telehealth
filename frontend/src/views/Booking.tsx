@@ -1,7 +1,7 @@
-import { Box, CircularProgress, Dialog, DialogTitle, DialogContent, DialogActions, Button, Typography } from "@mui/material";
-import { useState } from "react";
+import { Box, CircularProgress, Dialog, DialogTitle, DialogContent, DialogActions, Button, Typography, FormControl, InputLabel, Select, MenuItem } from "@mui/material";
+import { useEffect, useState } from "react";
 import { useAppDispatch, useAppSelector } from "../lib/hooks";
-import { fetchAvailableSlots, createAppointment } from "../api/appointments.api";
+import { fetchAvailableSlots, createAppointment, fetchProfessionals } from "../api/appointments.api";
 import DateSelector from "../components/DateSelector";
 import SlotList from "../components/SlotList";
 import { notify } from "../lib/notifications";
@@ -9,32 +9,51 @@ import { useNavigate } from "react-router-dom"; // Added for navigation
 import ArrowBackIcon from "@mui/icons-material/ArrowBack"; // Added for the back button
 
 export default function BookingPage() {
+  const [selectedProfessionalId, setSelectedProfessionalId] = useState<string>("");
   const dispatch = useAppDispatch();
   const navigate = useNavigate(); // Hook for back button
-  const { slots, loading } = useAppSelector((state) => state.appointments);
+  const { slots, loading, professionals } = useAppSelector((state) => state.appointments);
   const { token, user } = useAppSelector((state) => state.auth);
   const { colors, shadows } = useAppSelector((state) => state.theme);
+
+
+  useEffect(() => {
+  if (token) {
+    dispatch(fetchProfessionals({ token }));
+  }
+}, [dispatch, token]);
+  console.log(professionals)
 
   const [date, setDate] = useState<Date | null>(null);
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
 
   // In a real app, you'd get this from the URL params or a professional list
-  const professionalId = "c38be2c6-9863-49d9-9493-748cbad3b397"; 
+  const professionalId = "c38be2c6-9863-49d9-9493-748cbad3b397";
+  
 
-  const handleDateChange = (newDate: Date | null) => {
+
+  const handleDateChange = (newDate: Date | null, profId: string = selectedProfessionalId) => {
     setDate(newDate);
-    if (!newDate || !token) return;
-    dispatch(fetchAvailableSlots({ professionalId, date: newDate.toISOString(), token }));
+    if (!newDate || !token || !profId) return;
+    dispatch(fetchAvailableSlots({ professionalId: profId, date: newDate.toISOString(), token }));
   };
 
+  const handleProfessionalChange = (e: any) => {
+  const newId = e.target.value;
+  setSelectedProfessionalId(newId);
+  if (date) {
+    handleDateChange(date, newId);
+  }
+};
+
   const handleConfirmBooking = async () => {
-    if (!selectedSlot || !token || !user) return;
+    if (!selectedSlot || !token || !user || !selectedProfessionalId) return;
 
     const startTime = new Date(selectedSlot);
     const endTime = new Date(startTime.getTime() + 30 * 60 * 1000); // 30 min duration
 
     const result = await dispatch(createAppointment({
-      professionalId,
+      professionalId: selectedProfessionalId,
       patientId: user.id,
       startTime: startTime.toISOString(),
       endTime: endTime.toISOString(),
@@ -72,6 +91,23 @@ export default function BookingPage() {
           gap: 2 
         }}
       >
+      <Box sx={{ backgroundColor: colors.surface, p: 2, borderRadius: 3, boxShadow: shadows.md }}>
+        <FormControl fullWidth size="small">
+          <InputLabel id="select-professional-label">Médico / Profesional</InputLabel>
+          <Select
+            labelId="select-professional-label"
+            value={selectedProfessionalId}
+            label="Médico / Profesional"
+            onChange={handleProfessionalChange}
+          >
+            {professionals.map((p) => (
+              <MenuItem key={p.id} value={p.id}>
+                {p.name} {p.surname}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+      </Box>
         {/* BACK TO DASHBOARD BUTTON */}
         <Button
           startIcon={<ArrowBackIcon />}

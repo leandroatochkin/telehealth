@@ -18,8 +18,21 @@ import { createAsyncThunk } from "@reduxjs/toolkit";
 
 export const fetchPatientAppointments = createAsyncThunk(
   "appointments/fetchPatientAppointments",
-  async ({ token }: any) => {
+  async ({ token }: never) => {
     const res = await fetch(`${import.meta.env.VITE_API_URL}/appointments/patient`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    return res.json();
+  }
+);
+
+export const fetchProfessionals = createAsyncThunk(
+  "professionals/fetchProfessionals",
+  async ({ token }: never) => {
+    const res = await fetch(`${import.meta.env.VITE_API_URL}/professionals`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -31,7 +44,7 @@ export const fetchPatientAppointments = createAsyncThunk(
 
 export const fetchAppointmentsByPatient = createAsyncThunk(
   "appointments/fetchAppointmentsByPatient",
-  async ({ token, patientId }: any) => {
+  async ({ token, patientId }: never) => {
     const res = await fetch(`${import.meta.env.VITE_API_URL}/appointments/patient?patientId=${patientId}`, {
       headers: {
         Authorization: `Bearer ${token}`,
@@ -68,6 +81,7 @@ export const fetchAvailableSlots = createAsyncThunk(
       }
 
       return await res.json();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       return rejectWithValue(error.message);
     }
@@ -76,7 +90,7 @@ export const fetchAvailableSlots = createAsyncThunk(
 
 export const createAvailability = createAsyncThunk(
   "appointments/createAvailability",
-  async ({ date, startTime, endTime, token }: any) => {
+  async ({ date, startTime, endTime, token }: never) => {
     const res = await fetch(`${import.meta.env.VITE_API_URL}/availability`, {
       method: "POST",
       headers: {
@@ -96,7 +110,7 @@ export const createAvailability = createAsyncThunk(
 
 export const fetchProfessionalAppointmentsByDate = createAsyncThunk(
   "appointments/fetchByDate",
-  async ({ professionalId, date, token }: any, { rejectWithValue }) => {
+  async ({ professionalId, date, token }: never, { rejectWithValue }) => {
     try {
       const res = await fetch(
         `${import.meta.env.VITE_API_URL}/appointments/professional/${professionalId}?date=${date}`,
@@ -106,6 +120,7 @@ export const fetchProfessionalAppointmentsByDate = createAsyncThunk(
       );
       const data = await res.json();
       return data.data; // Assuming your backend returns { data: [...] }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       return rejectWithValue(err.message);
     }
@@ -114,7 +129,7 @@ export const fetchProfessionalAppointmentsByDate = createAsyncThunk(
 
 export const createAppointment = createAsyncThunk(
   "appointments/create",
-  async ({ professionalId, startTime, endTime, token }: any, { rejectWithValue }) => {
+  async ({ professionalId, startTime, endTime, token }: never, { rejectWithValue }) => {
     try {
       const res = await fetch(`${import.meta.env.VITE_API_URL}/appointments/create`, {
         method: "POST",
@@ -128,6 +143,7 @@ export const createAppointment = createAsyncThunk(
       const data = await res.json();
       if (!res.ok) return rejectWithValue(data.message);
       return data;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       return rejectWithValue(err.message);
     }

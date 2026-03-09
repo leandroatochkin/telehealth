@@ -20,7 +20,7 @@
         const { professionalId } = request.params;
         const { date } = request.query;
 
-        
+        console.log("Request: ", professionalId, date)
 
         const slots = await availabilityService.getAvailableSlots(
             professionalId,
@@ -30,6 +30,26 @@
         return reply.send({
             status: "success",
             data: slots,
+        });
+        } catch (error: any) {
+        return reply.status(400).send({
+            status: "fail",
+            message: error.message,
+        });
+        }
+    }
+    );
+    app.get<{}>(
+    "/professionals",
+    { preHandler: isAuthenticated },
+    async (request, reply) => {
+        try {
+
+        const professionals = await availabilityService.getProfessionals();
+
+        return reply.send({
+            status: "success",
+            data: professionals,
         });
         } catch (error: any) {
         return reply.status(400).send({
