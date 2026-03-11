@@ -1,5 +1,5 @@
 import { createSlice } from "@reduxjs/toolkit";
-import { searchPatientByDni, fetchHistoryEntries, addHistoryEntry } from "../../api/history.api";
+import { searchPatientByDni, fetchHistoryEntries, addHistoryEntry, getAIDiagnostic } from "../../api/history.api";
 
 interface HistoryState {
   patient: any | null;
@@ -8,6 +8,7 @@ interface HistoryState {
   loading: boolean;
   entriesLoading: boolean;
   error: string | null;
+  aiLoading: boolean; // For the "Get AI Diagnostic" button
 }
 
 const initialState: HistoryState = {
@@ -17,6 +18,7 @@ const initialState: HistoryState = {
   loading: false,
   entriesLoading: false,
   error: null,
+  aiLoading: false,
 };
 
 const historySlice = createSlice({
@@ -64,8 +66,19 @@ const historySlice = createSlice({
         state.entries.unshift(action.payload);
         state.totalEntries += 1;
       })
-
       
+      .addCase(getAIDiagnostic.pending, (state) => {
+        state.aiLoading = true; // Use a specific loader for the AI button
+      })
+      .addCase(getAIDiagnostic.fulfilled, (state) => {
+        state.aiLoading = false;
+        // We DON'T update state.entries here because the AI response 
+        // is handled by the component's local setDetails/setDiagnostics
+      })
+      .addCase(getAIDiagnostic.rejected, (state) => {
+        state.aiLoading = false;
+      });
+   
   },
 });
 

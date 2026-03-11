@@ -1,7 +1,7 @@
 import { 
   Box, Typography, TextField, Button, Paper, Divider, 
   Stack, Accordion, AccordionSummary, AccordionDetails, Chip,
-  Pagination
+  Pagination, Dialog, DialogTitle, DialogContent, DialogActions
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import AddIcon from "@mui/icons-material/Add";
@@ -11,17 +11,17 @@ import FilterListIcon from "@mui/icons-material/FilterList";
 import { useState, useEffect } from "react";
 import { useAppSelector, useAppDispatch } from "../lib/hooks";
 import { notify } from "../lib/notifications";
-import { searchPatientByDni, fetchHistoryEntries, addHistoryEntry} from "../api/history.api";
-
-// ... (imports remain the same)
+import { searchPatientByDni, fetchHistoryEntries, addHistoryEntry, getAIDiagnostic} from "../api/history.api";
+import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 
 export default function PatientHistory() {
+  const [aiWarningOpen, setAiWarningOpen] = useState(false);
   const dispatch = useAppDispatch();
   const { token } = useAppSelector(state => state.auth);
   const { colors } = useAppSelector((state) => state.theme);
   
   // Redux State
-  const { patient, entries, totalEntries, entriesLoading, loading } = useAppSelector(state => state.history);
+  const { patient, entries, totalEntries, entriesLoading, loading, aiLoading } = useAppSelector(state => state.history);
 
   // Local UI State
   const [dni, setDni] = useState("");
@@ -97,7 +97,7 @@ export default function PatientHistory() {
         token, 
         details, 
         diagnostics, 
-        date: entryDate 
+        date: entryDate
       }));
 
       if (addHistoryEntry.fulfilled.match(resultAction)) {
@@ -141,8 +141,42 @@ const handleRemoveDiagnostic = (index: number) => {
     );
   };
 
+  const handleRequestAI = async () => {
+  setAiWarningOpen(false);
+  try {
+    const resultAction = await dispatch(getAIDiagnostic({ details, diagnostics, token }));
+    if (getAIDiagnostic.fulfilled.match(resultAction)) {
+      const { details: aiDetails, diagnostics: aiDiags } = resultAction.payload;
+      
+      // Append AI analysis to existing details
+      setDetails(prev => `${prev}\n\n--- AI ANALYSIS ---\n${aiDetails}`);
+      // Merge unique diagnostics
+      setDiagnostics(prev => Array.from(new Set([...prev, ...aiDiags])));
+      notify("AI analysis integrated", "success");
+    }
+  } catch (err) {
+    notify("Error with AI Service", "error");
+  } 
+};
+
   return (
     <Box sx={{ p: 3 }}>
+      <Dialog open={aiWarningOpen} onClose={() => setAiWarningOpen(false)}>
+                <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <AutoAwesomeIcon color="secondary" /> Warning: AI Assistance
+                </DialogTitle>
+                <DialogContent>
+                  <Typography>
+                    Esta herramienta utiliza Inteligencia Artificial para analizar datos clínicos. 
+                    <strong> No reemplaza el juicio profesional médico.</strong> 
+                    La IA puede generar información incorrecta o sesgada. ¿Desea continuar?
+                  </Typography>
+                </DialogContent>
+                <DialogActions>
+                  <Button onClick={() => setAiWarningOpen(false)}>Cancelar</Button>
+                  <Button onClick={handleRequestAI} variant="contained" color="secondary">Entiendo, Continuar</Button>
+                </DialogActions>
+              </Dialog>
       <Typography variant="h4" gutterBottom sx={{ color: colors.textPrimary }}>
         Historia Clínica por Paciente
       </Typography>
@@ -154,7 +188,7 @@ const handleRemoveDiagnostic = (index: number) => {
           value={dni} 
           onChange={(e) => setDni(e.target.value)} 
           fullWidth
-          onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+          onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
         />
         <Button variant="contained" onClick={handleSearch} disabled={loading}>
           {loading ? "Buscando..." : "Buscar"}
@@ -164,7 +198,9 @@ const handleRemoveDiagnostic = (index: number) => {
       {patient && (
         <Box>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-            <Typography variant="h6">Paciente: {patient.name} {patient.surname}</Typography>
+            <Typography variant="h6" sx={{
+              color: colors.textPrimary,
+            }}>Paciente: {patient.name} {patient.surname}</Typography>
             <Stack direction="row" spacing={1}>
               <Button startIcon={<AddIcon />} variant="outlined" onClick={handleOpenAddForm}>Agregar Entrada</Button>
               <Button startIcon={<PictureAsPdfIcon />} color="secondary" onClick={() => downloadPdf()}>Exportar Todo</Button>
@@ -200,6 +236,15 @@ const handleRemoveDiagnostic = (index: number) => {
                 </Box>
               </Box>
               <Stack direction="row" spacing={2}>
+                <Button
+                variant="outlined"
+                color="secondary"
+                startIcon={<AutoAwesomeIcon />}
+                onClick={() => setAiWarningOpen(true)}
+                disabled={!details || aiLoading}
+              >
+                {aiLoading ? "Analizando..." : "AI Diagnostic Assistant"}
+              </Button>
                 <Button variant="contained" onClick={submitEntry} color="primary">Guardar Entrada</Button>
                 <Button variant="text" color="error" onClick={() => setShowAddForm(false)}>Cancelar</Button>
               </Stack>
@@ -209,6 +254,7 @@ const handleRemoveDiagnostic = (index: number) => {
           {
             !showAddForm && (
               <>
+              
           {/* FILTERS */}
           <Paper sx={{ p: 2, mb: 2, display: 'flex', alignItems: 'center', gap: 2, bgcolor: '#f5f5f5' }}>
             <FilterListIcon color="action" />
@@ -241,7 +287,7 @@ const handleRemoveDiagnostic = (index: number) => {
               <Accordion key={entry.id} sx={{ mb: 1 }}>
                 <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                   <Typography sx={{ width: '33%', flexShrink: 0, fontWeight: 'bold' }}>
-                    {new Date(entry.date).toLocaleDateString()}
+                    {new Date(entry.date).toLocaleDateString('es-AR', { timeZone: 'UTC' })}
                   </Typography>
                   <Typography sx={{ color: 'text.secondary' }}>{entry.doctorName}</Typography>
                 </AccordionSummary>

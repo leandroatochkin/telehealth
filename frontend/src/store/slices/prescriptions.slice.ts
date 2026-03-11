@@ -2,8 +2,15 @@ import { createSlice } from "@reduxjs/toolkit";
 import {
   createPrescription,
   fetchDoctorPrescriptions,
-  fetchPatientPrescriptions
+  fetchPatientPrescriptions,
+  identifyPatient
 } from "../../api/prescriptions.api";
+
+interface Patient {
+  dni: string;
+  name: string;
+  surname: string;
+}
 
 interface PrescriptionItem {
   drugName: string;
@@ -33,12 +40,14 @@ interface PrescriptionState {
   prescriptions: PrescriptionDTO | null;
   loading: boolean;
   error: string | null;
+  patient: Patient | null;
 }
 
 const initialState: PrescriptionState = {
   prescriptions: null,
   loading: false,
-  error: null
+  error: null,
+  patient: null
 };
 
 const prescriptionsSlice = createSlice({
@@ -93,7 +102,19 @@ const prescriptionsSlice = createSlice({
       .addCase(fetchDoctorPrescriptions.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
-      });
+      })
+
+            .addCase(identifyPatient.pending, (state) => {
+        state.loading = true;
+        state.patient = null;
+      })
+      .addCase(identifyPatient.fulfilled, (state, action) => {
+        state.loading = false;
+        state.patient = action.payload;
+      })
+      .addCase(identifyPatient.rejected, (state) => {
+        state.loading = false;
+      })
   }
 });
 

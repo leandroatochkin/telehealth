@@ -51,7 +51,7 @@ export default function BookingPage() {
 
     const startTime = new Date(selectedSlot);
     const endTime = new Date(startTime.getTime() + 30 * 60 * 1000); // 30 min duration
-
+                                         
     const result = await dispatch(createAppointment({
       professionalId: selectedProfessionalId,
       patientId: user.id,

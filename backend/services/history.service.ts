@@ -4,7 +4,14 @@ export class HistoryService {
   async getPatientByDni(dni: string) {
     const patient = await prisma.user.findUnique({
       where: { dni },
-      include: { patientHistory: true } 
+      select: { 
+        id: true,
+        dni: true,
+        name: true,
+        surname: true,
+        email: true,
+        patientHistory: true, // This includes the history relation
+      }, 
     });
     if (!patient) throw new Error("Patient not found");
     return patient;

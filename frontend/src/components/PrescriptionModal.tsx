@@ -25,13 +25,14 @@ import Papa from "papaparse";
 
 import { useDispatch, useSelector } from "react-redux";
 
-import { createPrescription } from "../api/prescriptions.api";
+import { createPrescription, identifyPatient } from "../api/prescriptions.api";
 
 export default function PrescriptionModal({ open, onClose }: any) {
   const dispatch: any = useDispatch();
-  const { loading } = useSelector((state: any) => state.prescriptions);
+  const { loading, patient } = useSelector((state: any) => state.prescriptions);
   const { token } = useSelector((state: any) => state.auth);
   const [patientId, setPatientId] = useState("");
+  const [isConfirmed, setIsConfirmed] = useState(false);
   const [selectedDrug, setSelectedDrug] = useState<any>(null);
   const [quantity, setQuantity] = useState<string>("1");
   const [prescribedDrugs, setPrescribedDrugs] = useState<any[]>([]);
@@ -72,6 +73,20 @@ export default function PrescriptionModal({ open, onClose }: any) {
     }
   }, [open]);
 
+  useEffect(() => {
+    if (!open) {
+      setPatientId("");
+      setIsConfirmed(false);
+      setPrescribedDrugs([]);
+    }
+  }, [open]);
+  
+  const handleIdentify = async () => {
+    const result = await dispatch(identifyPatient({ dni: patientId, token }));
+    if (patient.rejected.match(result)) {
+      notify(result.payload as string, "error");
+    }
+  };
 
   const handleAddDrug = () => {
     if (!selectedDrug) {
@@ -112,7 +127,7 @@ export default function PrescriptionModal({ open, onClose }: any) {
 
   // This is the actual body the backend expects
   const prescriptionBody = {
-    patientId, // This is the DNI
+    patientId: patient?.dni, // This is the DNI
     items: prescribedDrugs.map(d => ({
       drugName: d["NOMBRE COMERCIAL"],
       genericName: d["NOMBRE GENERICO"],
@@ -149,14 +164,46 @@ export default function PrescriptionModal({ open, onClose }: any) {
           Receta Médica Digital
         </Typography>
         <Stack spacing={3}>
-          <TextField
-            label="DNI del Paciente"
-            fullWidth
-            value={patientId}
-            onChange={(e) => setPatientId(e.target.value)}
-          />
+          <Paper variant="outlined" sx={{ p: 2, bgcolor: isConfirmed ? "success.light" : "background.paper" }}>
+            <Stack direction="row" spacing={2} alignItems="center">
+              <TextField
+                label="DNI del Paciente"
+                disabled={isConfirmed}
+                size="small"
+                value={patientId}
+                onChange={(e) => setPatientId(e.target.value)}
+              />
+              {!isConfirmed ? (
+                <Button variant="contained" onClick={handleIdentify} disabled={loading || !patientId}>
+                  {loading ? "Buscando..." : "Identificar"}
+                </Button>
+              ) : (
+                <Button size="small" onClick={() => setIsConfirmed(false)}>Cambiar</Button>
+              )}
+              {
+                isConfirmed && patient && (
+                  <Typography variant="subtitle1" sx={{ ml: 2 }}>
+                    {patient.data.surname}, {patient.data.name}
+                  </Typography>
+                )
+              }
+            </Stack>
 
-          <Box sx={{ p: 2, border: "1px dashed grey", borderRadius: 2 }}>
+            {patient && !isConfirmed && (
+              <Box sx={{ mt: 2, p: 2, border: "1px solid green", borderRadius: 1 }}>
+                <Typography variant="body2">Confirmar identidad:</Typography>
+                <Typography variant="h6">{patient.data.surname}, {patient.data.name}</Typography>
+                <Button fullWidth variant="contained" color="success" sx={{ mt: 1 }} onClick={() => setIsConfirmed(true)}>
+                  Confirmar y Continuar
+                </Button>
+              </Box>
+            )}
+          </Paper>
+
+          {
+            isConfirmed && (
+              <>
+              <Box sx={{ p: 2, border: "1px dashed grey", borderRadius: 2 }}>
             <Typography variant="subtitle2" sx={{ mb: 1, color: "text.secondary" }}>
               Añadir Medicamento
             </Typography>
@@ -236,6 +283,9 @@ export default function PrescriptionModal({ open, onClose }: any) {
           >
             {loading ? "Generando..." : `Generar Receta (${prescribedDrugs.length})`}
           </Button>
+              </>
+            )
+          }
         </Stack>
       </Box>
     </Dialog>

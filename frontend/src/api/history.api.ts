@@ -70,3 +70,24 @@ export const addHistoryEntry = createAsyncThunk(
     }
   }
 );
+
+export const getAIDiagnostic = createAsyncThunk(
+  "history/getAIDiagnostic",
+  async ({ details, diagnostics, token }: any, { rejectWithValue }) => {
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/ai/analyze`, {
+        method: "POST",
+        headers: { 
+          "Content-Type": "application/json", 
+          Authorization: `Bearer ${token}` 
+        },
+        body: JSON.stringify({ details, diagnostics }),
+      });
+      const data = await response.json();
+      if (!response.ok) return rejectWithValue(data.message);
+      return data;
+    } catch (err: any) {
+      return rejectWithValue("Servicio de IA no disponible");
+    }
+  }
+);

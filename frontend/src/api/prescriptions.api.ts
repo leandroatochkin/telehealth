@@ -83,3 +83,25 @@ export const fetchDoctorPrescriptions = createAsyncThunk(
     }
   }
 );
+
+export const identifyPatient = createAsyncThunk(
+
+  "history/identifyPatient",
+  async ({ dni, token }: { dni: string; token: string }, { rejectWithValue }) => {
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/patient`, {
+        method: "POST", // POST instead of GET for security
+        headers: { 
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}` 
+        },
+        body: JSON.stringify({ dni }),
+      });
+      const data = await response.json();
+      if (!response.ok) return rejectWithValue(data.message);
+      return data;
+    } catch (err) {
+      return rejectWithValue("Error de conexión");
+    }
+  }
+);
