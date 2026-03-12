@@ -18,7 +18,7 @@ import { createAsyncThunk } from "@reduxjs/toolkit";
 
 export const fetchPatientAppointments = createAsyncThunk(
   "appointments/fetchPatientAppointments",
-  async ({ token }: never) => {
+  async (token: string) => {
     const res = await fetch(`${import.meta.env.VITE_API_URL}/appointments/patient`, {
       headers: {
         Authorization: `Bearer ${token}`,
@@ -31,7 +31,7 @@ export const fetchPatientAppointments = createAsyncThunk(
 
 export const fetchProfessionals = createAsyncThunk(
   "professionals/fetchProfessionals",
-  async ({ token }: never) => {
+  async (token: string) => {
     const res = await fetch(`${import.meta.env.VITE_API_URL}/professionals`, {
       headers: {
         Authorization: `Bearer ${token}`,
@@ -44,7 +44,7 @@ export const fetchProfessionals = createAsyncThunk(
 
 export const fetchAppointmentsByPatient = createAsyncThunk(
   "appointments/fetchAppointmentsByPatient",
-  async ({ token, patientId }: never) => {
+  async ({ token, patientId }: any) => {
     const res = await fetch(`${import.meta.env.VITE_API_URL}/appointments/patient?patientId=${patientId}`, {
       headers: {
         Authorization: `Bearer ${token}`,
@@ -90,7 +90,7 @@ export const fetchAvailableSlots = createAsyncThunk(
 
 export const createAvailability = createAsyncThunk(
   "appointments/createAvailability",
-  async ({ date, startTime, endTime, token }: never) => {
+  async ({ date, startTime, endTime, token, isRecurring, duration }: any) => {
     const res = await fetch(`${import.meta.env.VITE_API_URL}/availability`, {
       method: "POST",
       headers: {
@@ -101,6 +101,8 @@ export const createAvailability = createAsyncThunk(
         date,
         startTime,
         endTime,
+        isRecurring,
+        duration
       }),
     });
 
@@ -108,9 +110,26 @@ export const createAvailability = createAsyncThunk(
   }
 );
 
+export const deleteAvailability = createAsyncThunk(
+  "appointments/deleteAvailability",
+  async ({ type, id, date, dayOfWeek, token }: any, { rejectWithValue }) => {
+    try {
+      const query = new URLSearchParams({ type, id, date, dayOfWeek }).toString();
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/availability?${query}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error("Error al eliminar");
+      return { type, id, date };
+    } catch (err: any) {
+      return rejectWithValue(err.message);
+    }
+  }
+);
+
 export const fetchProfessionalAppointmentsByDate = createAsyncThunk(
   "appointments/fetchByDate",
-  async ({ professionalId, date, token }: never, { rejectWithValue }) => {
+  async ({ professionalId, date, token }: any, { rejectWithValue }) => {
     try {
       const res = await fetch(
         `${import.meta.env.VITE_API_URL}/appointments/professional/${professionalId}?date=${date}`,
@@ -129,7 +148,7 @@ export const fetchProfessionalAppointmentsByDate = createAsyncThunk(
 
 export const createAppointment = createAsyncThunk(
   "appointments/create",
-  async ({ professionalId, startTime, endTime, token }: never, { rejectWithValue }) => {
+  async ({ professionalId, startTime, endTime, token }: any, { rejectWithValue }) => {
     try {
       const res = await fetch(`${import.meta.env.VITE_API_URL}/appointments/create`, {
         method: "POST",

@@ -30,7 +30,7 @@ export const createPrescription = createAsyncThunk(
 
 export const fetchPatientPrescriptions = createAsyncThunk(
   "prescriptions/patient",
-  async ({ token }: { token: string }, { rejectWithValue }) => {
+  async (token: string, { rejectWithValue }) => {
     try {
       const response = await fetch(
         `${import.meta.env.VITE_API_URL}/prescriptions/patient`,

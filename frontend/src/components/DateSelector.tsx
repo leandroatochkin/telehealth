@@ -10,10 +10,12 @@ type Props = {
   onChange: (date: Date | null) => void;
 };
 
+const adapterRegion = import.meta.env.VITE_DATE_ADAPTER_REGION || "es"; // Default to Spanish if not set
+
 export default function DateSelector({ value, onChange }: Props) {
   const { colors } = useAppSelector((state) => state.theme);
   return (
-    <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="es"> {/* Configura el locale a español */}
+    <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale={adapterRegion}> 
       <DateCalendar
         value={value ? dayjs(value) : null}
         onChange={(newValue) => {

@@ -17,6 +17,15 @@ export interface LoginInput {
   password: string;
 }
 
+export interface ForgotPasswordInput {
+  email: string;
+}
+
+export interface ResetPasswordInput {
+  email: string;
+  otp: string;
+  password: string;
+}
 
 
 export const signupUser = createAsyncThunk(
@@ -160,6 +169,46 @@ export const fetchStreamToken = createAsyncThunk(
       return data; // { user, token }
     } catch {
       return rejectWithValue("Failed to fetch stream token");
+    }
+  }
+);
+
+// 1. Request OTP for Password Reset
+export const forgotPassword = createAsyncThunk(
+  "auth/forgotPassword",
+  async (data: ForgotPasswordInput, { rejectWithValue }) => {
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/auth/forgot-password`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+
+      const result = await response.json();
+      if (!response.ok) return rejectWithValue(result.message);
+      return result; // Success message
+    } catch {
+      return rejectWithValue("No se pudo enviar el código de recuperación.");
+    }
+  }
+);
+
+// 2. Reset Password using OTP
+export const resetPassword = createAsyncThunk(
+  "auth/resetPassword",
+  async (data: ResetPasswordInput, { rejectWithValue }) => {
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/auth/reset-password`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+
+      const result = await response.json();
+      if (!response.ok) return rejectWithValue(result.message);
+      return result;
+    } catch {
+      return rejectWithValue("Error al resetear la contraseña.");
     }
   }
 );

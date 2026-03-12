@@ -19,17 +19,13 @@ export default function BookingPage() {
 
   useEffect(() => {
   if (token) {
-    dispatch(fetchProfessionals({ token }));
+    dispatch(fetchProfessionals(token));
   }
 }, [dispatch, token]);
-  console.log(professionals)
+ 
 
   const [date, setDate] = useState<Date | null>(null);
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
-
-  // In a real app, you'd get this from the URL params or a professional list
-  const professionalId = "c38be2c6-9863-49d9-9493-748cbad3b397";
-  
 
 
   const handleDateChange = (newDate: Date | null, profId: string = selectedProfessionalId) => {

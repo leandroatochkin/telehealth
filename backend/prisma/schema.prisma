@@ -92,12 +92,12 @@ model Availability {
   professionalId  String
 
   professional    User     @relation(fields: [professionalId], references: [id])
-
+  date            DateTime?
   dayOfWeek Int      // 0 (Sunday) - 6 (Saturday)
 
   startTime String   // "09:00"
   endTime   String   // "17:00"
-
+  duration  Int @default(30)
   createdAt DateTime @default(now())
 
   @@index([professionalId, dayOfWeek])

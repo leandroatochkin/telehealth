@@ -12,7 +12,7 @@ export default function TodayAppointments() {
   const { appointments } = useAppSelector(
     (state) => state.appointments
   );
-  console.log("Appointments from state:", appointments); // Debugging line
+
 
 
   const { token } = useAppSelector((state) => state.auth);
@@ -22,7 +22,7 @@ export default function TodayAppointments() {
    useEffect(() => {
       if (!token) return;
   
-      dispatch(fetchPatientAppointments({ token }));
+      dispatch(fetchPatientAppointments(token));
     }, [token]);
 
   const handleJoin = (callId: string) => {

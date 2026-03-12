@@ -12,7 +12,11 @@ export class AvailabilityService {
     const availability = await prisma.availability.findMany({
       where: {
         professionalId,
-        dayOfWeek,
+        // Busca específicamente el día seleccionado o registros recurrentes sin fecha
+        OR: [
+          { date: targetDate },
+          { AND: [{ dayOfWeek }, { date: null }] } 
+        ]
       },
     });
 
@@ -47,6 +51,8 @@ export class AvailabilityService {
       const slotEnd = new Date(targetDate);
       slotEnd.setHours(endHour ?? 0, endMin ?? 0, 0, 0);
 
+      const step = block.duration || 30;
+
       while (slotStart < slotEnd) {
         const iso = slotStart.toISOString();
 
@@ -54,10 +60,10 @@ export class AvailabilityService {
           slots.push(iso);
         }
 
-        slotStart.setMinutes(slotStart.getMinutes() + 30);
+        slotStart.setMinutes(slotStart.getMinutes() + step);
       }
     }
-    console.log("Slots: ", slots)
+
     return slots;
   }
 
@@ -74,5 +80,34 @@ export class AvailabilityService {
     });
 
     return professionals;
+  }
+
+  async deleteAvailabilityById(id: string, professionalId: string) {
+    return await prisma.availability.deleteMany({
+      where: { id, professionalId },
+    });
+  }
+
+  async deleteDailyAvailability(professionalId: string, date: string) {
+    const targetDate = new Date(date);
+    return await prisma.availability.deleteMany({
+      where: {
+        professionalId,
+        date: {
+          gte: new Date(targetDate.setHours(0, 0, 0, 0)),
+          lt: new Date(targetDate.setHours(23, 59, 59, 999)),
+        },
+      },
+    });
+  }
+
+  async deleteWeeklyAvailability(professionalId: string, dayOfWeek: number) {
+    return await prisma.availability.deleteMany({
+      where: {
+        professionalId,
+        dayOfWeek,
+        date: null, 
+      },
+    });
   }
 }

@@ -4,6 +4,10 @@ import {
   Button,
   TextField,
   CircularProgress,
+  FormControlLabel, 
+  Switch,
+  Divider,
+  Stack,
 } from "@mui/material";
 
 import { useState } from "react";
@@ -11,11 +15,14 @@ import { useAppDispatch, useAppSelector } from "../lib/hooks";
 
 import DateSelector from "../components/DateSelector";
 import SlotList from "../components/SlotList";
+import DeleteSweepIcon from "@mui/icons-material/DeleteSweep";
+import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
 
 import {
   createAvailability,
   fetchAvailableSlots,
   fetchProfessionalAppointmentsByDate,
+  deleteAvailability
 } from "../api/appointments.api";
 
 import { notify } from "../lib/notifications";
@@ -31,7 +38,6 @@ export default function ProfessionalAvailabilityPage() {
     (state) => state.appointments
   );
 
-  console.log("Slots in Availability Page:", slots); // Debug log to check slot data
 
   const { colors, shadows, fontWeights } =
     useAppSelector((state) => state.theme);
@@ -39,6 +45,8 @@ export default function ProfessionalAvailabilityPage() {
   const [date, setDate] = useState<Date | null>(null);
   const [startTime, setStartTime] = useState("09:00");
   const [endTime, setEndTime] = useState("13:00");
+  const [isRecurring, setIsRecurring] = useState(false);
+  const [duration, setDuration] = useState(30);
 
   const handleDateChange = (newDate: Date | null) => {
   setDate(newDate);
@@ -53,31 +61,30 @@ export default function ProfessionalAvailabilityPage() {
   dispatch(fetchProfessionalAppointmentsByDate({ professionalId: user?.id ?? "", date: dateIso, token }));
 };
 
-  const handleCreateSlots = async () => {
+const handleCreateSlots = async () => {
   if (!date || !token) {
     notify("Por favor seleccione una fecha", "warning");
     return;
   }
 
   try {
-    // 1. Dispatch the creation
     const resultAction = await dispatch(
       createAvailability({
         date: date.toISOString(),
         startTime,
         endTime,
         token,
+        isRecurring,
+        duration 
       })
     );
 
-    // 2. Check if the creation was successful
     if (createAvailability.fulfilled.match(resultAction)) {
-      notify("Turnos generados con éxito", "success");
-
-      // 3. AUTO-REFRESH: Fetch the new slots immediately
+      notify(isRecurring ? "Horario semanal configurado" : "Turnos generados", "success");
+      
+      // Refresco de datos
       const dateIso = date.toISOString();
       const professionalId = user?.id ?? "";
-
       dispatch(fetchAvailableSlots({ professionalId, date: dateIso, token }));
       dispatch(fetchProfessionalAppointmentsByDate({ professionalId, date: dateIso, token }));
     } else {
@@ -87,115 +94,98 @@ export default function ProfessionalAvailabilityPage() {
     notify("Error de red", "error");
   }
 };
-  return (
-    <Box
-      sx={{
-        display: "flex",
-        gap: 3,
-        backgroundColor: colors.background,
-      }}
-    >
-      {/* CALENDAR */}
-      <Box
-        sx={{
-          flex: 1,
-          backgroundColor: colors.surface,
-          borderRadius: 3,
-          boxShadow: shadows.lg,
-          padding: 3,
-        }}
-      >
-        <Typography
-          sx={{
-            fontWeight: fontWeights.semibold,
-            mb: 2,
-            color: colors.textPrimary,
-          }}
-        >
+
+const handleDeleteDaily = async () => {
+  if (!date) return;
+  if (window.confirm("¿Borrar toda la disponibilidad de este día específico?")) {
+    await dispatch(deleteAvailability({ 
+      type: 'daily', 
+      date: date.toISOString(), 
+      token 
+    }));
+    // Refrescar
+    handleDateChange(date);
+  }
+};
+
+const handleDeleteWeekly = async () => {
+  if (!date) return;
+  const dayName = date.toLocaleDateString('es-ES', { weekday: 'long' });
+  if (window.confirm(`¿Borrar la configuración recurrente de todos los ${dayName}?`)) {
+    await dispatch(deleteAvailability({ 
+      type: 'weekly', 
+      dayOfWeek: date.getDay(), 
+      token 
+    }));
+    handleDateChange(date);
+  }
+};
+
+return (
+    <Box sx={{ display: "flex", gap: 3, backgroundColor: colors.background }}>
+      {/* COLUMNA CALENDARIO (Sin cambios) */}
+      <Box sx={{ flex: 1, backgroundColor: colors.surface, borderRadius: 3, boxShadow: shadows.lg, padding: 3 }}>
+        <Typography sx={{ fontWeight: fontWeights.semibold, mb: 2, color: colors.textPrimary }}>
           Seleccione el día
         </Typography>
-
         <DateSelector value={date} onChange={handleDateChange} />
       </Box>
 
-      {/* SLOT EDITOR */}
-      <Box
-        sx={{
-          flex: 1,
-          backgroundColor: colors.surface,
-          borderRadius: 3,
-          boxShadow: shadows.lg,
-          padding: 3,
-          display: "flex",
-          flexDirection: "column",
-        }}
-      >
-        <Typography
-          sx={{
-            fontWeight: fontWeights.semibold,
-            mb: 3,
-            color: colors.textPrimary,
-          }}
-        >
-          Crear Rango de Turnos
+      {/* COLUMNA EDITOR Y LISTADO */}
+      <Box sx={{ flex: 1.5, backgroundColor: colors.surface, borderRadius: 3, boxShadow: shadows.lg, padding: 3, display: "flex", flexDirection: "column" }}>
+        <Typography sx={{ fontWeight: fontWeights.semibold, mb: 3, color: colors.textPrimary }}>
+          Gestión de Disponibilidad
         </Typography>
 
-        <Box
-          sx={{
-            display: "flex",
-            gap: 2,
-            mb: 3,
-          }}
-        >
-          <TextField
-            type="time"
-            label="Comienza"
-            value={startTime}
-            onChange={(e) => setStartTime(e.target.value)}
-            fullWidth
-          />
+        {/* INPUTS DE TIEMPO Y SWITCH (Tu lógica existente) */}
+        <Box sx={{ display: "flex", gap: 2, mb: 2 }}>
+          <TextField type="time" label="Comienza" value={startTime} onChange={(e) => setStartTime(e.target.value)} fullWidth />
+          <TextField type="time" label="Finaliza" value={endTime} onChange={(e) => setEndTime(e.target.value)} fullWidth />
+        </Box>
 
+        <FormControlLabel
+          control={<Switch checked={isRecurring} onChange={(e) => setIsRecurring(e.target.checked)} color="primary" />}
+          label={<Typography sx={{ fontSize: '0.85rem', color: colors.textPrimary }}>Repetir semanalmente</Typography>}
+          sx={{ mb: 1 }}
+        />
+
+        <Box sx={{ mb: 2 }}>
           <TextField
-            type="time"
-            label="Finaliza "
-            value={endTime}
-            onChange={(e) => setEndTime(e.target.value)}
+            select
             fullWidth
-          />
+            label="Duración del turno"
+            value={duration}
+            onChange={(e) => setDuration(Number(e.target.value))}
+            SelectProps={{ native: true }}
+          >
+            <option value={15}>15 minutos</option>
+            <option value={20}>20 minutos</option>
+            <option value={30}>30 minutos</option>
+            <option value={45}>45 minutos</option>
+            <option value={60}>60 minutos</option>
+          </TextField>
         </Box>
 
         <Button
+          fullWidth
           variant="contained"
           onClick={handleCreateSlots}
-          sx={{
-            backgroundColor: colors.primary,
-            fontWeight: fontWeights.medium,
-            textTransform: "none",
-            borderRadius: 2,
-            mb: 4,
-          }}
+          disabled={loading || !date}
+          sx={{ backgroundColor: colors.primary, mb: 3 }}
         >
-          Generar Turnos de 30min
+          {loading ? <CircularProgress size={24} /> : "Generar Bloque de Turnos"}
         </Button>
 
-        <Typography
-          sx={{
-            fontWeight: fontWeights.semibold,
-            mb: 2,
-            color: colors.textPrimary,
-          }}
-        >
-          Turnos Disponibles  
+        <Divider sx={{ mb: 3 }} />
+
+        {/* LISTADO DE TURNOS */}
+        <Typography sx={{ fontWeight: fontWeights.semibold, mb: 2, color: colors.textPrimary }}>
+          Agenda para el {date?.toLocaleDateString()}
         </Typography>
 
-        <Box
-          sx={{
-            flex: 1,
-            overflowY: "auto",
-          }}
-        >
+        <Box sx={{ flex: 1, overflowY: "auto", minHeight: '300px', mb: 3 }}>
           {loading ? (
-            <CircularProgress />
+            <Box sx={{ display: 'flex', justifyContent: 'center' }}><CircularProgress /></Box>
           ) : (
             <SlotList
               slots={slots}
@@ -204,6 +194,37 @@ export default function ProfessionalAvailabilityPage() {
             />
           )}
         </Box>
+
+        {/* SECCIÓN DE ELIMINACIÓN MASIVA */}
+        {date && (
+          <Box sx={{ mt: 'auto', pt: 2, borderTop: `1px solid ${colors.background}` }}>
+            <Typography variant="caption" sx={{ color: colors.textSecondary, display: 'block', mb: 1 }}>
+              ACCIONES DE LIMPIEZA
+            </Typography>
+            <Stack direction="row" spacing={2}>
+              <Button
+                size="small"
+                variant="outlined"
+                color="error"
+                startIcon={<DeleteSweepIcon />}
+                onClick={handleDeleteDaily}
+                fullWidth
+              >
+                Limpiar Día
+              </Button>
+              <Button
+                size="small"
+                variant="outlined"
+                color="error"
+                startIcon={<CalendarMonthIcon />}
+                onClick={handleDeleteWeekly}
+                fullWidth
+              >
+                Borrar Recurrencia
+              </Button>
+            </Stack>
+          </Box>
+        )}
       </Box>
     </Box>
   );

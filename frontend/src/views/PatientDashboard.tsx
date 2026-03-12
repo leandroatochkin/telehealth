@@ -47,9 +47,7 @@ export default function PatientDashboardPage() {
     (state) => state.prescriptions
   );
 
-  console.log("Prescriptions in Dashboard:", prescriptions); // Debug log to check prescription data
   const user = useAppSelector((state) => state.auth.user);
-  console.log("User in Dashboard:", user); // Debug log to check user data
   const streamToken = useAppSelector((state) => state.auth.streamToken);
 
   const apiKey = import.meta.env.VITE_STREAM_API_KEY;
@@ -66,29 +64,28 @@ export default function PatientDashboardPage() {
   useEffect(() => {
       if (!token) return;
 
-      dispatch(fetchPatientAppointments({ token }));
-      dispatch(fetchPatientPrescriptions({ token }));
+      dispatch(fetchPatientAppointments(token));
+      dispatch(fetchPatientPrescriptions(token));
 
     }, [token]);
 
   const upcoming = appointments?.[0];
-console.log("Upcoming appointment:", upcoming); // Debug log to check upcoming appointment data
 
   const handleJoinCall = (appointment: any) => {
   const startTime = new Date(appointment.startTime).getTime();
   const now = currentTime.getTime();
   
   // 5 minutes in milliseconds
-  const fiveMinutes = 5 * 60 * 1000;
+  const waitTime = Number(import.meta.env.VITE_CALL_WAIT_TIME_IN_MINUTES) * 60 * 1000;
 
-  // if (now < startTime - fiveMinutes) {
-  //   notify(
-  //     "Solo puedes unirte a la llamada 5 minutos antes de que comience. Por favor, regresa más tarde.", 
-  //     "warning"
-  //   );
-  //   return;
-  // }
-  console.log("Joining appointment:", appointment); // Debug log to check appointment ID
+  if (now < startTime - waitTime) {
+    notify(
+      "Solo puedes unirte a la llamada 5 minutos antes de que comience. Por favor, regresa más tarde.", 
+      "warning"
+    );
+    return;
+  }
+
 
   navigate(`/video/${appointment}`);
     };
@@ -335,7 +332,6 @@ const handleLogout = () => {
                   textTransform: "none",
                 }}
                 onClick={() => {
-                  console.log("Joining appointment with ID:", upcoming.id); // Debug log to check appointment ID
                   handleJoinCall(upcoming.id)
                 }}
               >
@@ -405,7 +401,6 @@ const handleLogout = () => {
           ) : (
             Array.isArray(prescriptions?.prescriptions) &&
             prescriptions.prescriptions.map((p: any) => {
-              console.log("Prescription item:", p);
               const age = (Date.now() - new Date(p.createdAt).getTime()) / (1000 * 60 * 60 * 24);
               const expired = age > 30;
 

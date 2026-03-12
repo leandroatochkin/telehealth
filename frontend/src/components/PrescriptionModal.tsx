@@ -43,7 +43,7 @@ export default function PrescriptionModal({ open, onClose }: any) {
   useEffect(() => {
     if (open) {
       setLoadingCsv(true);
-      Papa.parse("/vnm-jun-2018-.csv", {
+      Papa.parse(String(import.meta.env.VITE_MEDICATIONS_CSV), {
         download: true,
         header: true,
         skipEmptyLines: true,
@@ -81,9 +81,11 @@ export default function PrescriptionModal({ open, onClose }: any) {
     }
   }, [open]);
   
-  const handleIdentify = async () => {
+ const handleIdentify = async () => {
+
     const result = await dispatch(identifyPatient({ dni: patientId, token }));
-    if (patient.rejected.match(result)) {
+    
+    if (identifyPatient.rejected.match(result)) {
       notify(result.payload as string, "error");
     }
   };

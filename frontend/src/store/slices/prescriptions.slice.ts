@@ -112,8 +112,9 @@ const prescriptionsSlice = createSlice({
         state.loading = false;
         state.patient = action.payload;
       })
-      .addCase(identifyPatient.rejected, (state) => {
+      .addCase(identifyPatient.rejected, (state, action) => {
         state.loading = false;
+        state.error = action.payload as string;
       })
   }
 });

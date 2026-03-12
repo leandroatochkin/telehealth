@@ -8,52 +8,69 @@ type Props = {
 };
 
 export default function SlotList({ slots, appointments, onSelect }: Props) {
-  // Helper to find if an appointment exists for a specific slot time
-  // const getAppointmentForSlot = (slotTime: string) => {
-  //   return appointments.find((app) => new Date(app.startTime).toISOString() === slotTime);
-  // };
+  const hasContent = (appointments && appointments.length > 0) || slots.length > 0;
+
+  if (!hasContent) {
+    return (
+      <Box sx={{ p: 4, textAlign: 'center', border: '1px dashed #ccc', borderRadius: 2 }}>
+        <Typography variant="body2" color="textSecondary">
+          No hay turnos configurados para esta fecha.
+        </Typography>
+      </Box>
+    );
+  }
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-      {/* RENDER BOOKED SLOTS FIRST */}
-      {appointments &&appointments.length > 0 && (
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+      {/* OCUPADOS */}
+      {appointments && appointments.length > 0 && (
         <Box>
-          <Typography variant="caption" sx={{ color: "error.main", fontWeight: "bold" }}>
-            OCUPADOS (PACIENTES)
+          <Typography variant="caption" sx={{ color: "error.main", fontWeight: "bold", letterSpacing: 1 }}>
+            CITAS PROGRAMADAS
           </Typography>
           <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, mt: 1 }}>
             {appointments.map((app) => (
               <Paper
-                key={app.id + Math.random()} // Use a unique key for each appointment
+                key={app.id}
+                elevation={0}
                 sx={{
-                  p: 1,
-                  backgroundColor: "#ffebee",
-                  border: "1px solid #ffcdd2",
-                  minWidth: "120px",
+                  p: 1.5,
+                  backgroundColor: "#fff1f0",
+                  border: "1px solid #ffa39e",
+                  borderRadius: 2,
+                  minWidth: "140px",
                 }}
               >
-                <Typography variant="body2" sx={{ fontWeight: "bold" }}>
+                <Typography variant="subtitle2" sx={{ lineHeight: 1 }}>
                   {new Date(app.startTime).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                 </Typography>
-                <Typography variant="caption">{app.patient?.username || "Paciente"}</Typography>
+                <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                  {app.patient?.username || "Paciente"}
+                </Typography>
               </Paper>
             ))}
           </Box>
         </Box>
       )}
 
-      {/* RENDER AVAILABLE SLOTS */}
+      {/* DISPONIBLES */}
       <Box>
-        <Typography variant="caption" sx={{ color: "success.main", fontWeight: "bold" }}>
-          DISPONIBLES
+        <Typography variant="caption" sx={{ color: "success.main", fontWeight: "bold", letterSpacing: 1 }}>
+          TURNOS LIBRES
         </Typography>
         <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, mt: 1 }}>
           {slots.map((slot) => (
             <Button
-              key={slot + Math.random()} // Use a unique key for each slot
+              key={slot}
               variant="outlined"
               color="success"
               onClick={() => onSelect(slot)}
+              sx={{ 
+                borderRadius: 2, 
+                textTransform: 'none',
+                minWidth: '80px',
+                '&:hover': { backgroundColor: '#f6ffed' }
+              }}
             >
               {new Date(slot).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
             </Button>

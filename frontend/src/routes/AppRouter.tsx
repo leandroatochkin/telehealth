@@ -10,6 +10,7 @@ import ProfessionalRoute from "./ProfessionalRoutes";
 import BookingPage from "../views/Booking";
 import ProfessionalDashboard from "../views/ProfessionalDashboard";
 import PatientDashboardPage from "../views/PatientDashboard";
+import ForgotPasswordPage from "../views/ForgotPassword";
 
 export default function AppRouter() {
   return (
@@ -19,6 +20,7 @@ export default function AppRouter() {
         {/* PUBLIC ROUTES */}
       
           <Route path="/auth/login" element={<LoginPage />} />
+          <Route path="/auth/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/auth/signup" element={<SignupPage />} />
           <Route path="/auth/verify" element={<VerifyPage />} />
         

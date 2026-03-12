@@ -173,6 +173,25 @@ export default function LoginPage() {
                 Regístrese aquí
               </Link>
             </Typography>
+            <Typography
+              variant="body2"
+              sx={{
+                color: colors.textSecondary,
+                fontWeight: fontWeights.regular,
+              }}
+            >
+              ¿Olvidó su contraseña?{" "}
+              <Link
+                to="/auth/forgot-password"
+                style={{
+                  color: colors.primary,
+                  fontWeight: fontWeights.medium,
+                  textDecoration: "none",
+                }}
+              >
+                Recuperar contraseña
+              </Link>
+            </Typography>
           </Box>
         </Box>
       </Container>

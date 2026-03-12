@@ -1,5 +1,5 @@
 import { createSlice } from "@reduxjs/toolkit";
-import { signupUser, verifyAccount, resendOtp, loginUser, fetchStreamToken } from "../../api/auth.api";
+import { signupUser, verifyAccount, resendOtp, loginUser, fetchStreamToken, forgotPassword, resetPassword } from "../../api/auth.api";
 
 interface AuthState {
   loading: boolean;
@@ -12,6 +12,7 @@ interface AuthState {
   streamToken: string | null;
   streamUser: any | null;
   streamLoading: boolean;
+  resetSent: boolean;
 }
 
 const initialState: AuthState = {
@@ -27,6 +28,7 @@ const initialState: AuthState = {
   streamToken: localStorage.getItem("streamToken"),
   streamUser: null,
   streamLoading: false,
+  resetSent: false
 };
 
 const authSlice = createSlice({
@@ -34,6 +36,11 @@ const authSlice = createSlice({
   initialState,
   reducers: {
     clearError: (state) => {
+      state.error = null;
+    },
+    resetResetFlow: (state) => {
+      state.resetSent = false;
+      state.pendingEmail = null;
       state.error = null;
     },
     logout: (state) => {
@@ -119,9 +126,37 @@ const authSlice = createSlice({
     })
     .addCase(fetchStreamToken.rejected, (state) => {
       state.streamLoading = false;
-    });
+    })
+    .addCase(forgotPassword.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(forgotPassword.fulfilled, (state, action) => {
+        state.loading = false;
+        state.resetSent = true;
+        state.pendingEmail = action.meta.arg.email; // Store email for the reset form
+      })
+      .addCase(forgotPassword.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
+
+      // RESET PASSWORD
+      .addCase(resetPassword.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(resetPassword.fulfilled, (state) => {
+        state.loading = false;
+        state.resetSent = false;
+        state.pendingEmail = null;
+      })
+      .addCase(resetPassword.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      });
     }
 });
 
-export const { clearError, logout } = authSlice.actions;
+export const { clearError, logout, resetResetFlow } = authSlice.actions;
 export default authSlice.reducer;

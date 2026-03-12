@@ -30,7 +30,7 @@ export default function AdminChatModal({
       // Ensure this is unique per user if it's a 1-on-1 support chat.
       const supportChannel = chatClient.channel("messaging", `support-${userId}`, {
         members: [userId], // Assuming 'admin' exists
-        name: 'Soporte Técnico'
+        name: process.env.VITE_CHAT_NAME
       });
 
       await supportChannel.watch();

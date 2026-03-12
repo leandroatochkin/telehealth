@@ -53,7 +53,7 @@ export default function PatientHistory() {
       const downloadUrl = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = downloadUrl;
-      link.setAttribute('download', entryId ? `Consulta_${entryId}.pdf` : `Historia_${patient.dni}.pdf`);
+      link.setAttribute('download', entryId ? `${patient.dni}_${entryId}.pdf` : `HC_${patient.dni}.pdf`);
       document.body.appendChild(link);
       link.click();
       link.remove();
