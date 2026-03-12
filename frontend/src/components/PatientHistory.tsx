@@ -149,10 +149,10 @@ const handleRemoveDiagnostic = (index: number) => {
       const { details: aiDetails, diagnostics: aiDiags } = resultAction.payload;
       
       // Append AI analysis to existing details
-      setDetails(prev => `${prev}\n\n--- AI ANALYSIS ---\n${aiDetails}`);
+      setDetails(prev => `${prev}\n\n--- ANÁLISIS AI ---\n${aiDetails}`);
       // Merge unique diagnostics
       setDiagnostics(prev => Array.from(new Set([...prev, ...aiDiags])));
-      notify("AI analysis integrated", "success");
+      notify("Análisis AI completo", "success");
     }
   } catch (err) {
     notify("Error with AI Service", "error");

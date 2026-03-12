@@ -1,69 +1,63 @@
-import { OpenAI } from "openai";
+import "dotenv/config";
+import { GoogleGenerativeAI } from "@google/generative-ai";
+
+const SYSTEM_PROMPT = `
+You are a professional medical assistant. Analyze the patient's consultation details and suggest a clinical analysis and diagnostic tags.
+Output ONLY a valid JSON object.
+
+RULES:
+1. Provide a field "details" with a concise clinical summary (max 5 sentences) and a suspected diagnostic.
+2. Provide a field "diagnostics" which is a flat array of possible medical diagnostics.
+3. Language: Respond in the same language as the input (Spanish).
+4. Do NOT include markdown backticks or extra text.
+
+EXAMPLE OUTPUT:
+{
+  "details": "El paciente presenta síntomas compatibles con una infección respiratoria superior.",
+  "diagnostics": ["Fiebre", "Rinitis"]
+}
+`
 
 export class AIService {
-  private openai: OpenAI;
+  private genAI: GoogleGenerativeAI;
 
   constructor() {
-    const apiKey = process.env.OPENROUTER_API_KEY;
-    
-    if (!apiKey) {
-      throw new Error("OPENROUTER_API_KEY is not defined in environment variables");
-    }
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) throw new Error("GEMINI_API_KEY is missing");
+    this.genAI = new GoogleGenerativeAI(apiKey);
+  }
 
-    this.openai = new OpenAI({
-      baseURL: "https://openrouter.ai/api/v1",
-      apiKey: apiKey,
-      defaultHeaders: {
-        "HTTP-Referer": "http://localhost:3000", // Required for some OpenRouter models
-        "X-Title": "Telehealth App", 
-      }
+  async generateDiagnostic(userPrompt: string, currentDiagnostics: string[]) {
+    // Current stable version as of 2026: gemini-2.5-flash
+    const model = this.genAI.getGenerativeModel({
+      model: "gemini-2.5-flash",
+      systemInstruction: SYSTEM_PROMPT,
     });
-  }
 
-  async generateDiagnostic(details: string, currentDiagnostics: string[]) {
-    const prompt = `
-      Eres un asistente clínico profesional. Analiza los detalles de la consulta y sugiere diagnósticos.
-      REGLAS:
-      1. Respuesta ÚNICAMENTE en formato JSON.
-      2. Análisis breve (máximo 3 oraciones).
-      3. Sugiere 2 a 4 etiquetas de diagnóstico (CIE-10 o términos médicos).
-      
-      Detalles de la consulta: "${details}"
-      Etiquetas actuales: ${currentDiagnostics.join(", ")}
-
-      FORMATO JSON ESPERADO:
-      {
-        "details": "Análisis IA: [Tu análisis aquí]",
-        "diagnostics": ["Tag1", "Tag2"]
-      }
-    `;
-
-    const models = [
-    "qwen/qwen-2-7b-instruct:free"
-  ];
-
-
-    let lastError;
-
-  for (const model of models) {
     try {
-      console.log(`Attempting AI analysis with model: ${model}`);
-      const response = await this.openai.chat.completions.create({
-        model: model,
-        messages: [{ role: "user", content: prompt }],
-        response_format: { type: "json_object" },
-      });
+      // We pass the prompt. The SDK handles the system instruction separately.
+      const result = await model.generateContent(`Task: Analyze these symptoms: ${userPrompt}. Existing tags: ${currentDiagnostics.join(", ")}`);
+      let rawText = result.response.text();
 
-      return JSON.parse(response?.choices[0]?.message.content || "{}");
+      // FIX: Clean markdown if the model included it
+      rawText = rawText.replace(/```json|```/g, "").trim();
+
+      let parsed;
+      try {
+        parsed = JSON.parse(rawText);
+      } catch (err) {
+        console.error("❌ Failed to parse Gemini response:", rawText);
+        throw new Error("Invalid AI Response format");
+      }
+
+      // Return the structured data to your controller
+      return {
+        details: parsed.details || "No se pudo generar el análisis.",
+        diagnostics: parsed.diagnostics || []
+      };
     } catch (error: any) {
-      console.warn(`Model ${model} failed: ${error.message}`);
-      lastError = error;
-      continue; // Try the next model in the list
+      console.error("Gemini SDK Error:", error.message);
+      throw error;
     }
-  }
-
-  // If all models fail, throw the last error
-  throw new Error(`All AI models failed. Last error: ${lastError?.message}`);
   }
 }
-
