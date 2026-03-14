@@ -11,6 +11,7 @@ import BookingPage from "../views/Booking";
 import ProfessionalDashboard from "../views/ProfessionalDashboard";
 import PatientDashboardPage from "../views/PatientDashboard";
 import ForgotPasswordPage from "../views/ForgotPassword";
+import HomePage from "../views/Home";
 
 export default function AppRouter() {
   return (
@@ -19,6 +20,7 @@ export default function AppRouter() {
 
         {/* PUBLIC ROUTES */}
       
+          <Route path="/" element={<HomePage />} />
           <Route path="/auth/login" element={<LoginPage />} />
           <Route path="/auth/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/auth/signup" element={<SignupPage />} />

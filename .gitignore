@@ -6,3 +6,6 @@ env
 *.log
 *.env
 .env
+docker-compose.yaml
+setup.sh
+Dockerfile
