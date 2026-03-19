@@ -6,7 +6,10 @@ import TodayAppointments from "../components/TodayAppointments";
 import ProfessionalAvailabilityPage from "./ProfessionalAvailability";
 import PrescriptionModal from "../components/PrescriptionModal";
 import PatientHistory from "../components/PatientHistory";
+import ProfessionalChatCenter from "./ChatCenter";
 import { logout } from "../store/slices/auth.slice";
+import { useCreateChatClient } from "stream-chat-react";
+import type { UserResponse } from "@stream-io/video-react-sdk";
 
 export default function ProfessionalDashboard() {
   const dispatch = useAppDispatch();
@@ -14,7 +17,7 @@ export default function ProfessionalDashboard() {
   const { colors, shadows } = useAppSelector(state => state.theme);
 
   const [view, setView] = useState<
-    "appointments" | "availability" | "history"
+    "appointments" | "availability" | "history" | "chat"
   >("appointments");
 
   const [prescriptionOpen, setPrescriptionOpen] = useState(false);
@@ -22,7 +25,21 @@ export default function ProfessionalDashboard() {
   const handleLogout = () => {
       dispatch(logout());
       navigate("/auth/login");
-    };
+    }
+
+    const streamToken = useAppSelector((state) => state.auth.streamToken);
+    const user = useAppSelector((state) => state.auth.user);
+    const apiKey = import.meta.env.VITE_STREAM_API_KEY;
+
+      const chatClient = useCreateChatClient({
+        apiKey,
+        tokenOrProvider: streamToken as string,
+        userData: {
+          id: user?.id ?? "",
+          name: user?.name ?? "",
+        } as UserResponse,
+      });
+  
   
 
   return (
@@ -75,6 +92,10 @@ export default function ProfessionalDashboard() {
           Historial de Pacientes
         </Button>
 
+        <Button onClick={() => setView("chat")}>
+          Mensajería y Soporte
+        </Button>
+
         <Button
           fullWidth
           variant="outlined"
@@ -103,6 +124,13 @@ export default function ProfessionalDashboard() {
         {view === "availability" && <ProfessionalAvailabilityPage />}
 
         {view === "history" && <PatientHistory />}
+
+        {view === "chat" && (
+            <ProfessionalChatCenter 
+              chatClient={chatClient} // Asegúrate de pasar el cliente inicializado
+              user={user} 
+            />
+          )}
 
       </Box>
 

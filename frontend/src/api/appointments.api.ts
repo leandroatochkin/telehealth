@@ -1,21 +1,5 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
 
-// export const fetchProfessionalSlots = createAsyncThunk(
-//   "appointments/fetchProfessionalSlots",
-//   async ({ date, token }: any) => {
-//     const res = await fetch(
-//       `/api/appointments/professional-slots?date=${date}`,
-//       {
-//         headers: {
-//           Authorization: `Bearer ${token}`,
-//         },
-//       }
-//     );
-
-//     return res.json();
-//   }
-// );
-
 export const fetchPatientAppointments = createAsyncThunk(
   "appointments/fetchPatientAppointments",
   async (token: string) => {

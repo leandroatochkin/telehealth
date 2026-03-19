@@ -15,6 +15,7 @@ import { historyController } from "./controllers/history.controller.js";
 import { historyPdfController } from "./controllers/historyPdf.controller.js";
 import { patientDataController } from "./controllers/patientData.controller.js";
 import { passwordController } from "./controllers/resetPassword.controller.js";
+import { chatController } from "./controllers/chat.controller.js";
 
 export const app = Fastify({
   logger: {
@@ -73,6 +74,7 @@ const start = async () => {
   await app.register(historyPdfController, { prefix: urlPrefix });
   await app.register(patientDataController, { prefix: urlPrefix });
   await app.register(passwordController, { prefix: urlPrefix });
+  await app.register(chatController, { prefix: urlPrefix });
   
   app.setErrorHandler((error: any, request, reply) => {
   // Log the error details with Pino

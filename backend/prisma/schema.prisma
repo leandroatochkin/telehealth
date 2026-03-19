@@ -166,3 +166,15 @@ model HistoryEntry {
   
   createdAt        DateTime @default(now())
 }
+
+model ChatBackup {
+  id              String   @id @default(uuid())
+  streamMessageId String   @unique
+  channelId       String
+  senderId        String   // ID del User que envió
+  senderName      String   // Nombre para lectura rápida
+  text            String   @db.Text
+  createdAt       DateTime @default(now())
+
+  @@index([channelId])
+}
