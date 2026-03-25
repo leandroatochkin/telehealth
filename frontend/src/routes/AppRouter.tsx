@@ -7,11 +7,13 @@ import VideoStream from "../views/Video";
 import ProtectedRoute from "./ProtectedRoute";
 import PatientRoute from "./PatientRoutes";
 import ProfessionalRoute from "./ProfessionalRoutes";
+import AdminRoute from "./AdminRoute";
 import BookingPage from "../views/Booking";
 import ProfessionalDashboard from "../views/ProfessionalDashboard";
 import PatientDashboardPage from "../views/PatientDashboard";
 import ForgotPasswordPage from "../views/ForgotPassword";
 import HomePage from "../views/Home";
+import AdminDashboard from "../views/AdminDashboard";
 
 export default function AppRouter() {
   return (
@@ -40,6 +42,10 @@ export default function AppRouter() {
 
         <Route element={<ProfessionalRoute />}>
           <Route path="/dashboard/professional" element={<ProfessionalDashboard />} />
+        </Route>
+
+        <Route element={<AdminRoute />}>
+          <Route path="/dashboard/admin" element={<AdminDashboard />} />
         </Route>
 
         {/* DEFAULT ROUTE */}

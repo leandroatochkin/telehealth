@@ -6,6 +6,7 @@ import professionalReducer from "./slices/professional.slice";
 import prescriptionsReducer from "./slices/prescriptions.slice";
 import historyReducer from "./slices/history.slice";
 import chatReducer from "./slices/chat.slice";
+import adminReducer from "./slices/admin.slice";
 
 export const store = configureStore({
   reducer: {
@@ -15,7 +16,8 @@ export const store = configureStore({
     professional: professionalReducer,
     prescriptions: prescriptionsReducer,
     history: historyReducer,
-    chat: chatReducer, 
+    chat: chatReducer,
+    admin: adminReducer, 
   },
 });
 

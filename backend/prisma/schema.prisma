@@ -178,3 +178,27 @@ model ChatBackup {
 
   @@index([channelId])
 }
+
+model SystemSetting {
+  id    String @id @default(uuid())
+  key   String @unique // Ej: "STREAM_API_KEY"
+  value String
+  updatedAt DateTime @updatedAt
+}
+
+enum ApiProvider {
+  STREAM
+  GEMINI
+}
+
+model ApiUsage {
+  id              String      @id @default(uuid())
+  provider        ApiProvider
+  totalTokens     Int         // Consumo absoluto de la operación
+  tokensPrompt    Int?        // Detalle (opcional)
+  tokensResponse  Int?        // Detalle (opcional)
+  modelName       String?     // Para diferenciar entre Gemini 1.5 Flash vs Pro
+  createdAt       DateTime    @default(now())
+
+  @@index([provider, createdAt]) // Índice compuesto para reportes temporales rápidos
+}

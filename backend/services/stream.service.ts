@@ -1,4 +1,5 @@
 import { streamClient } from "../lib/stream.js";
+import { logApiUsage } from "./usage.service.js";
 
 interface StreamUserInput {
   id: string;
@@ -32,6 +33,8 @@ export const generateStreamTokenService = async (
 
     // Create Stream token
     const token = streamClient.createToken(id);
+
+    await logApiUsage("STREAM", 1, "access-token-auth");
 
     return {
       token,

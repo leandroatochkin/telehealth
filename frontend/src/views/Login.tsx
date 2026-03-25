@@ -41,6 +41,8 @@ export default function LoginPage() {
       navigate("/dashboard/patient");
     } else if (user.role === "PROFESSIONAL") {
       navigate("/dashboard/professional");
+    } else if (user.role === "ADMIN") {
+      navigate("/dashboard/admin");
     }
   }
 }, [token, user, dispatch, navigate]); 

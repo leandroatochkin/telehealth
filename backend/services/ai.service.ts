@@ -1,5 +1,7 @@
 import "dotenv/config";
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { getSystemSetting } from "./config.service.js";
+import { logApiUsage } from "./usage.service.js";
 
 const SYSTEM_PROMPT = `
 You are a professional medical assistant. Analyze the patient's consultation details and suggest a clinical analysis and diagnostic tags.
@@ -18,43 +20,40 @@ EXAMPLE OUTPUT:
 }
 `
 
+
+
+
 export class AIService {
-  private genAI: GoogleGenerativeAI;
-
-  constructor() {
-    const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) throw new Error("GEMINI_API_KEY is missing");
-    this.genAI = new GoogleGenerativeAI(apiKey);
-  }
-
   async generateDiagnostic(userPrompt: string, currentDiagnostics: string[]) {
-    // Current stable version as of 2026: gemini-2.5-flash
-    const model = this.genAI.getGenerativeModel({
+    // 1. Obtenemos la KEY dinámica (Hot-reload)
+    const currentApiKey = await getSystemSetting("GEMINI_API_KEY");
+    if (!currentApiKey) throw new Error("GEMINI_API_KEY is missing in DB/Env");
+
+    const genAI = new GoogleGenerativeAI(currentApiKey);
+    const model = genAI.getGenerativeModel({
       model: "gemini-2.5-flash",
       systemInstruction: SYSTEM_PROMPT,
     });
 
     try {
-      // We pass the prompt. The SDK handles the system instruction separately.
       const result = await model.generateContent(`Task: Analyze these symptoms: ${userPrompt}. Existing tags: ${currentDiagnostics.join(", ")}`);
-      let rawText = result.response.text();
-
-      // FIX: Clean markdown if the model included it
-      rawText = rawText.replace(/```json|```/g, "").trim();
-
-      let parsed;
-      try {
-        parsed = JSON.parse(rawText);
-      } catch (err) {
-        console.error("❌ Failed to parse Gemini response:", rawText);
-        throw new Error("Invalid AI Response format");
+      
+      // 2. EXTRAEMOS EL USO DE TOKENS
+      const usage = result.response.usageMetadata;
+      
+      // 3. AQUÍ USAS LA FUNCIÓN DE LOG
+      if (usage) {
+        await logApiUsage(
+          "GEMINI", 
+          usage.totalTokenCount, 
+          "gemini-2.5-flash"
+        );
       }
 
-      // Return the structured data to your controller
-      return {
-        details: parsed.details || "No se pudo generar el análisis.",
-        diagnostics: parsed.diagnostics || []
-      };
+      let rawText = result.response.text();
+      // ... (tu lógica de limpieza de JSON)
+      return JSON.parse(rawText.replace(/```json|```/g, "").trim());
+
     } catch (error: any) {
       console.error("Gemini SDK Error:", error.message);
       throw error;
